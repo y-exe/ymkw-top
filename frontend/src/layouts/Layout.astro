@@ -1,0 +1,119 @@
+---
+import { ViewTransitions } from 'astro:transitions';
+import Sidebar from '../components/Sidebar.astro';
+import Header from '../components/Header.astro';
+import LoginModal from '../components/LoginModal.jsx';
+import LoadingScreen from '../components/LoadingScreen.astro';
+import MobileNavigation from '../components/MobileNavigation.jsx';
+import 'nprogress/nprogress.css';
+import '../styles/global.css';
+
+const { title, hideNavigation = false } = Astro.props;
+
+const userId = Astro.cookies.get('user_id')?.value;
+const userNameRaw = Astro.cookies.get('user_name')?.value;
+const userName = userNameRaw ? decodeURIComponent(userNameRaw) : null;
+const userAvatar = Astro.cookies.get('user_avatar')?.value;
+const user = { id: userId, name: userName, avatar: userAvatar };
+
+const currentPath = Astro.url.pathname;
+const queryParams = Astro.url.search;
+const channelId = Astro.url.searchParams.get('channel');
+
+const parts = currentPath.split('/').filter(Boolean);
+const mode = parts[0] === 'open' ? 'Overview' : 'Monthly';
+const year = parts[1];
+const month = parts[2];
+const isDashboard = currentPath.includes('/month/') || currentPath.includes('/open/');
+---
+
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{title} | やまかわてるき鯖 統計</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+        <ViewTransitions />
+        <style is:global>
+            #nprogress .bar { background: #3b82f6 !important; height: 3px !important; z-index: 10001 !important; }
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 20px; }
+            
+            @media (max-width: 767px) {
+                .mobile-content-pt { padding-top: 8.5rem !important; }
+            }
+        </style>
+	</head>
+	<body class="bg-gray-50 text-gray-900 font-sans min-h-screen flex flex-col md:flex-row">
+    
+    <LoadingScreen />
+
+    {!hideNavigation ? (
+        <>
+            <Sidebar transition:persist />
+
+            <div class="md:hidden">
+                <MobileNavigation 
+                    client:load 
+                    user={user} 
+                    currentPath={currentPath}
+                    queryParams={queryParams}
+                />
+            </div>
+
+            <div class="flex-1 min-w-0 md:ml-80 flex flex-col transition-all mobile-content-pt relative">
+                <Header /> 
+                
+                <main class="px-4 md:px-8 lg:p-12 flex-1 pb-24">
+                    {isDashboard && (
+                        <div class="md:hidden mb-6 flex items-center justify-center text-[10px] font-bold text-gray-400 bg-white/90 py-3 px-5 rounded-2xl border border-gray-100 shadow-sm backdrop-blur-lg mx-auto w-fit">
+                            <span class="text-gray-900 uppercase tracking-widest">{mode}</span>
+                            {year && <span><span class="mx-2 text-gray-200">/</span>{year}年 {month}月</span>}
+                            {channelId && <span><span class="mx-2 text-gray-200">/</span><span class="text-blue-600">CH_{channelId}</span></span>}
+                        </div>
+                    )}
+
+                    <slot />
+                </main>
+
+                {}
+                <footer class="mt-auto py-12 border-t border-gray-100 bg-white/50 backdrop-blur-sm">
+                    <div class="max-w-7xl mx-auto px-8 flex flex-col items-center gap-8">
+                        <div class="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                            <a href="/terms" class="hover:text-blue-600 transition-colors">利用規約</a>
+                            <div class="w-1 h-1 bg-gray-200 rounded-full"></div>
+                            <a href="/privacy" class="hover:text-blue-600 transition-colors">プライバシーポリシー</a>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-[11px] font-black text-gray-900 font-outfit uppercase tracking-tighter italic shadow-sm">
+                                    © 2025 <span class="text-blue-600">ymkw.top</span>
+                                </span>
+                                <div class="w-[1px] h-3 bg-gray-200"></div>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Built by yexe</span>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </>
+    ) : (
+        <main class="min-h-screen w-full relative"><slot /></main>
+    )}
+
+    <LoginModal client:load />
+
+    <script>
+      import NProgress from 'nprogress';
+      NProgress.configure({ showSpinner: false, speed: 400 });
+      document.addEventListener('astro:before-preparation', () => NProgress.start());
+      window.addEventListener('app-loaded', () => NProgress.done());
+      document.addEventListener('astro:after-swap', () => setTimeout(() => NProgress.done(), 8000));
+    </script>
+	</body>
+</html>

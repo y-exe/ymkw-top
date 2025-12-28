@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="プライバシーポリシー">
+    <div class="max-w-4xl mx-auto py-16 px-6">
+        <div class="bg-white rounded-[3rem] border border-gray-200 shadow-sm p-8 md:p-16 animate-fade-in font-sans">
+            <h1 class="text-4xl font-black text-gray-900 mb-4 font-outfit tracking-tight">プライバシーポリシー</h1>
+            <div class="flex gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-12 font-mono">
+                <span>発行: 2025.12.28</span>
+                <span>最終更新: 2025.12.28</span>
+            </div>
+
+            <div class="space-y-12 text-gray-600 leading-relaxed text-sm">
+                <section>
+                    <p>
+                        ymkw.top（以下「当運営」）は、本統計サービス（以下「本サービス」）におけるデータ処理に関し、日本の個人情報保護法、EU一般データ保護規則（GDPR）、米国各州のプライバシー法（CCPA等）を含む国際的なプライバシー基準を遵守し、以下の通りポリシーを定めます。
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>第1条（収集する情報の種類と非収集の明記）
+                    </h2>
+                    <div class="pl-4 space-y-4">
+                        <p>本サービスはDiscord APIを通じて以下の「パブリックなメタデータ」のみを取得します。</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li><strong>プロファイル識別子:</strong> Discord ID、ユーザーネーム、表示名、アバターURL。</li>
+                            <li><strong>活動ログ:</strong> メッセージの送信日時、送信先チャンネル、メッセージID、送信テキストの文字数カウント。</li>
+                        </ul>
+                        <div class="p-4 bg-red-50 border border-red-100 rounded-2xl">
+                            <p class="text-red-700 font-bold">【重要：非収集データ】</p>
+                            <p class="text-xs text-red-600">本サービスは、メッセージの「内容（本文）」、添付ファイル、画像、通話音声などを一切取得・保存・処理しません。Botは文字数を数えた瞬間にメモリからテキストを破棄します。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>第2条（Cookieおよびローカルストレージの技術的詳細）
+                    </h2>
+                    <div class="pl-4 space-y-4">
+                        <p>ユーザーのブラウザに以下の技術を用いて情報を一時的に保存します。</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li><strong>Cookie (Session/Persistent):</strong> ログインセッションの維持、およびアクセス制限ページ（admin_auth）の認証情報を保持します。</li>
+                            <li><strong>LocalStorage:</strong> ユーザー設定、最後に表示したチャンネルの記憶、UIのキャッシュに使用されます。</li>
+                        </ul>
+                        <p>これらはユーザー個人を追跡する広告目的（トラッキング）には一切使用されません。</p>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>第3条（データの保存期間とグローバル転送）
+                    </h2>
+                    <div class="pl-4 space-y-4">
+                        <p>1. <strong>データ保持:</strong> 取得したメタデータは、本サービスの運用に必要な期間、またはユーザーが削除を要求するまで保持されます。</p>
+                        <p>2. <strong>国際転送:</strong> 本サービスはCloudflareのグローバルネットワークを利用しています。取得されたデータは、Cloudflareのエッジサーバーが存在する世界各地、および当運営が利用するサーバー（日本国内等）間で転送・処理される場合があります。ユーザーは本サービスを利用することで、この国際的なデータ転送に同意するものとします。</p>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>第4条（世界中のユーザーの権利）
+                    </h2>
+                    <div class="pl-4 space-y-4">
+                        <p>当運営は、GDPR、CCPA、日本の個人情報保護法、およびその他の地域の法令に基づき、居住地を問わずすべてのユーザーに以下の権利を保障します。</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li><strong>開示・アクセスの権利:</strong> 自身に関してどのようなデータが保存されているかを確認できます。</li>
+                            <li><strong>削除・消去の権利 (Right to be Forgotten):</strong> 自身のユーザーIDに関連付けられたすべての統計データの完全削除を要求できます。</li>
+                            <li><strong>処理の拒否:</strong> 自身のデータをランキングやグラフに反映させないよう設定、または削除を依頼できます。</li>
+                        </ul>
+                        <p>これらの権利を行使する場合、Discord上の当運営者（yexe）へ通知してください。確認後、合理的な期間内に対応します。</p>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>第5条（データの安全性）
+                    </h2>
+                    <p class="pl-4">
+                        当運営は、ディスクキャッシュの暗号化やアクセス制限など、適切な技術的・組織的安全管理措置を講じています。万が一データ侵害が発生した場合は、速やかに告知または適切な手段でユーザーに通知します。
+                    </p>
+                </section>
+
+                <section>
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>第6条（ポリシーの改定）
+                    </h2>
+                    <p class="pl-4">
+                        法規制の変化やサービス内容の更新に伴い、本ポリシーは随時改定されます。重要な変更がある場合は、サイト上またはDiscordサーバーを通じて告知します。
+                    </p>
+                </section>
+            </div>
+        </div>
+    </div>
+</Layout>

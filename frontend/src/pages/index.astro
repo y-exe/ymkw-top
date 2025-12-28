@@ -1,0 +1,107 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Calendar, History, ArrowRight } from 'lucide-react';
+
+export const prerender = false;
+
+const API_URL = "https://api.ymkw.top";
+let latestSnapshotId = null;
+
+try {
+    const res = await fetch(`${API_URL}/api/snapshots`);
+    if (res.ok) {
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+            latestSnapshotId = list[0].snapshot_id;
+        }
+    }
+} catch(e) {
+    console.error("Home Snapshot Fetch Error:", e);
+}
+
+const date = new Date();
+date.setDate(0); 
+const prevMonthYear = date.getFullYear();
+const prevMonth = date.getMonth() + 1;
+---
+
+<Layout title="Top" hideNavigation={true}>
+    {}
+    <style>
+        @font-face { font-family: 'ZakkuriGothic'; src: url('/fonts/ZakkuriGothicFree-Black.otf') format('opentype'); font-display: swap; }
+        :root { --box-size: 14rem; }
+        @media (min-width: 640px) { :root { --box-size: 18rem; } }
+        @media (min-width: 1024px) { :root { --box-size: 22rem; } }
+        .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 100vh; width: 100%; position: relative; overflow: hidden; background-color: white; padding: 2rem 1.5rem; font-family: 'Outfit', sans-serif; }
+        .bg-text-container { position: absolute; inset: 0; z-index: 0; opacity: 0.04; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .bg-text-content { font-family: 'Dela Gothic One', cursive; font-size: 25vw; line-height: 1; transform: scale(1.0, 3.5); user-select: none; color: black; white-space: nowrap; }
+        .header-logo { display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .header-sub { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.3em; color: #9ca3af; text-transform: uppercase; }
+        .header-main { font-weight: 800; font-size: 1.5rem; letter-spacing: -0.05em; color: #111827; margin-top: 0.25rem; }
+        .footer { z-index: 10; text-align: center; font-size: 0.625rem; color: #d1d5db; font-family: monospace; }
+        .main-grid { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; width: 100%; max-width: 80rem; z-index: 10; }
+        @media (min-width: 1024px) { .main-grid { flex-direction: row; gap: 4rem; } }
+        .nav-card { position: relative; width: 100%; background-color: white; border: 1px solid #f3f4f6; padding: 2rem; border-radius: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; transition: transform 0.3s, box-shadow 0.3s; }
+        @media (min-width: 1024px) { .nav-card { width: 18rem; } }
+        .nav-card:hover { transform: translateY(-4px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .card-icon { width: 3rem; height: 3rem; background-color: #f9fafb; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: #111827; }
+        .card-title { font-weight: 700; font-size: 1.125rem; color: #111827; margin-bottom: 0.25rem; }
+        .card-sub { font-size: 0.75rem; color: #9ca3af; font-family: monospace; margin-bottom: 1rem; }
+        .card-link { font-size: 0.625rem; font-weight: 700; color: #111827; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.125rem; display: flex; align-items: center; gap: 0.25rem; }
+        .red-box { position: relative; background-color: #ff0000; border-radius: 3rem; width: var(--box-size); height: var(--box-size); display: flex; align-items: center; justify-content: center; box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.4); }
+        .char-container { width: 82%; height: 82%; position: relative; }
+        .char { position: absolute; display: flex; align-items: center; justify-content: center; width: 50%; height: 50%; color: white; font-family: 'ZakkuriGothic', sans-serif; font-size: calc(var(--box-size) * 0.82 * 0.52); line-height: 0.65; animation-duration: 4s; animation-iteration-count: infinite; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+        .char-1 { animation-name: move-ya; }
+        .char-2 { animation-name: move-ma; }
+        .char-3 { animation-name: move-ka; }
+        .char-4 { animation-name: move-wa; }
+        @keyframes move-ya { 0%,100% {top:0;left:0} 15%,25% {top:50%;left:0} 40%,50% {top:50%;left:50%} 65%,75% {top:0;left:50%} }
+        @keyframes move-ma { 0%,100% {top:0;left:50%} 15%,25% {top:0;left:0} 40%,50% {top:50%;left:0} 65%,75% {top:50%;left:50%} }
+        @keyframes move-ka { 0%,100% {top:50%;left:0} 15%,25% {top:50%;left:50%} 40%,50% {top:0;left:50%} 65%,75% {top:0;left:0} }
+        @keyframes move-wa { 0%,100% {top:50%;left:50%} 15%,25% {top:0;left:50%} 40%,50% {top:0;left:0} 65%,75% {top:50%;left:0} }
+    </style>
+
+    <div class="wrapper animate-fade-in">
+        <div class="bg-text-container">
+            <span class="bg-text-content">山川輝樹</span>
+        </div>
+        <div class="header-logo">
+             <span class="header-sub">Server Analytics</span>
+             <h1 class="header-main">ymkw.top</h1>
+        </div>
+        <div class="main-grid">
+            <a href={`/month/${prevMonthYear}/${prevMonth}`} class="nav-card order-2 lg:order-1">
+                <div class="card-icon"><Calendar className="w-6 h-6" /></div>
+                <h2 class="card-title">Monthly Report</h2>
+                <p class="card-sub">{prevMonthYear}.{prevMonth} Report</p>
+                <span class="card-link">View Ranking <ArrowRight className="w-3 h-3" /></span>
+            </a>
+            <div class="order-1 lg:order-2">
+                <div class="red-box">
+                    <div class="char-container">
+                        <span class="char char-1">や</span>
+                        <span class="char char-2">ま</span>
+                        <span class="char char-3">か</span>
+                        <span class="char char-4">わ</span>
+                    </div>
+                </div>
+            </div>
+            {latestSnapshotId ? (
+                <a href={`/open/${latestSnapshotId}`} class="nav-card order-3">
+                    <div class="card-icon"><History className="w-6 h-6" /></div>
+                    <h2 class="card-title">All Time Best</h2>
+                    <p class="card-sub">Snapshot #{latestSnapshotId}</p>
+                    <span class="card-link">View History <ArrowRight className="w-3 h-3" /></span>
+                </a>
+            ) : (
+                <a href="/no-snapshots" class="nav-card order-3 opacity-70">
+                    <div class="card-icon"><History className="w-6 h-6 text-gray-400" /></div>
+                    <h2 class="card-title text-gray-500">No Snapshots</h2>
+                    <p class="card-sub">Waiting for generation...</p>
+                    <span class="card-link text-gray-400">Not Available</span>
+                </a>
+            )}
+        </div>
+        <div class="footer"><p>© 2025 ymkw.top</p></div>
+    </div>
+</Layout>

@@ -1,0 +1,63 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SnapshotDashboard from '../../components/SnapshotDashboard.jsx';
+
+const { year, month } = Astro.params;
+const url = Astro.url;
+
+const now = new Date();
+const targetYear = parseInt(year || "0");
+const targetMonth = parseInt(month || "0");
+const isRestricted = (targetYear > now.getFullYear()) || (targetYear === now.getFullYear() && targetMonth >= (now.getMonth() + 1));
+
+const ADMIN_PASSWORD = "ymkwdev1130";
+const isAuthorized = Astro.cookies.get('admin_auth')?.value === 'true';
+
+if (Astro.request.method === "POST") {
+    try {
+        const formData = await Astro.request.formData();
+        if (formData.get("password") === ADMIN_PASSWORD) {
+            Astro.cookies.set('admin_auth', 'true', { path: '/', maxAge: 86400, httpOnly: true, secure: true, sameSite: 'lax' });
+            return Astro.redirect(url.pathname + url.search);
+        }
+    } catch (e) {}
+}
+
+const channelId = url.searchParams.get('channel');
+let userId = url.searchParams.get('user') || Astro.cookies.get('user_id')?.value;
+if (userId === 'guest') userId = null;
+
+Astro.response.headers.set('Cache-Control', isRestricted ? 'no-store' : 'public, s-maxage=600');
+---
+
+<Layout title={`${year}.${month} Monthly Report`}>
+    {isRestricted && !isAuthorized ? (
+        <>
+            <div class="h-[60vh] flex flex-col items-center justify-center animate-fade-in p-4">
+                <div class="bg-white p-10 rounded-[2.5rem] border border-gray-200 shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+                    <h2 class="text-2xl font-black text-gray-900 mb-2 font-outfit">Restricted Area</h2>
+                    <p class="text-sm text-gray-500 mb-8 leading-relaxed">{year}年{month}月のレポートは未公開です。パスワードを入力してください。</p>
+                    <form method="POST" class="space-y-4">
+                        <input type="password" name="password" placeholder="Password" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-center font-bold outline-none focus:border-blue-500 transition-all" required />
+                        <button type="submit" class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-all">Unlock</button>
+                    </form>
+                    <button onclick="history.back()" class="mt-8 text-xs font-bold text-gray-400 hover:text-gray-900 flex items-center justify-center gap-2 mx-auto">前のページに戻る</button>
+                </div>
+            </div>
+            {}
+            <script is:inline>
+                (function(){
+                    const screen = document.getElementById('loading-screen');
+                    if(screen) {
+                        screen.style.opacity = '0';
+                        screen.style.pointerEvents = 'none';
+                        setTimeout(() => screen.style.display = 'none', 500);
+                    }
+                })();
+            </script>
+        </>
+    ) : (
+        <Dashboard client:load year={year} month={month} channelId={channelId} userId={userId} />
+    )}
+</Layout>
