@@ -1,15 +1,15 @@
 # Discord Server Analytics (ymkw.top)
 
-Discord鯖のアクティビティ収集、集計、可視化するための統合システムです。
-Discord.pyによるデータ収集、FastAPIによるデータ提供、Astro/ReactによるWebダッシュボードで構成。
+Discord鯖のアクティビティ収集、集計、可視化するための統合システムです。<br>
+Discord.pyによるデータ収集、FastAPIによるデータ提供、Astro/ReactによるWebダッシュボードで構成
 
 ## ディレクトリ構成
 
 プロジェクトは以下のモノレポ構成で管理されています。
 
-- bot/ : データ収集およびコマンド操作を行うDiscord Bot
-- backend/ : データベースと通信し、フロントエンドにJSONを提供するREST API
-- frontend/ : Cloudflare Pagesで動作するWebダッシュボード (Astro + React)
+- bot/ : データ収集およびコマンド操作を行うDiscordBot
+- backend/ : データベースと通信し、フロントエンドにJSONを提供するRESTAPI
+- frontend/ : Webダッシュボード (Astro + React)
 
 ## 必須要件
 
@@ -47,7 +47,7 @@ ANNOUNCE_CHANNEL_ID=通知用チャンネルID
 **frontend/.env:**
 
 ```ini
-PUBLIC_API_URL=https://api.yourdomain.com
+PUBLIC_API_URL=https://api.example.com
 ```
 
 ### 3. 各コンポーネントの起動
@@ -113,4 +113,3 @@ npm run build
 MIT License
 
 Copyright (c) 2025 ymkw.top
-```
