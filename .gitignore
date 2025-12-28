@@ -1,0 +1,15 @@
+**/.env
+.env
+
+**/__pycache__/
+**/*.py[cod]
+
+**/node_modules/
+**/dist/
+**/.astro/
+
+.vscode/
+.idea/
+**/.DS_Store
+
+**/ymkw_api_diskcache_v*
