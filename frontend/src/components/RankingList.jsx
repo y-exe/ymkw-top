@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Trophy } from 'lucide-react';
 
 export default function RankingList({ data, highlightUserId }) {
@@ -14,8 +15,14 @@ export default function RankingList({ data, highlightUserId }) {
   const listItems = data.slice(3, displayLimit);
   const hiddenItems = data.slice(displayLimit);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openModal = () => {
+      setIsModalOpen(true);
+      document.body.style.overflow = 'hidden';
+  };
+  const closeModal = () => {
+      setIsModalOpen(false);
+      document.body.style.overflow = 'unset';
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -51,10 +58,10 @@ export default function RankingList({ data, highlightUserId }) {
             )}
         </div>
 
-        {/* Modal */}
-        {isModalOpen && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={closeModal}>
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col overflow-hidden animate-fade-in" onClick={e => e.stopPropagation()}>
+        {}
+        {isModalOpen && createPortal(
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in" onClick={closeModal}>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg h-[80vh] flex flex-col overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>
                     <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                         <h3 className="font-bold text-lg">Full Ranking</h3>
                         <button onClick={closeModal} className="p-1 hover:bg-gray-100 rounded-full"><X className="w-5 h-5 text-gray-500" /></button>
@@ -65,7 +72,8 @@ export default function RankingList({ data, highlightUserId }) {
                         ))}
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         )}
     </div>
   );
