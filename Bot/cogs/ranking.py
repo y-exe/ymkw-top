@@ -7,13 +7,21 @@ from dateutil.relativedelta import relativedelta
 import config
 import aiohttp
 
+# =========================================================
+# 定数設定
+# =========================================================
 EMOJI_FIRST = "<:first:1452959005625417790>"
 EMOJI_SECOND = "<:second:1452958981969543168>"
 EMOJI_THIRD = "<:third:1452958880379306024>"
 EXCLUDE_CHANNEL_ID = 1406033558757314752
 KING_ROLE_ID = 1452968848998531245
+
+# 削除済みユーザー除外フィルタ (ILIKEで曖昧判定)
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
+# =========================================================
+# 古いボタン対策
+# =========================================================
 class DummyOldRankingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -25,6 +33,9 @@ class DummyOldRankingView(discord.ui.View):
             ephemeral=True
         )
 
+# =========================================================
+# 月選択プルダウン
+# =========================================================
 class MonthSelect(discord.ui.Select):
     def __init__(self, bot):
         self.bot = bot
@@ -54,6 +65,9 @@ class MonthSelectView(discord.ui.View):
         super().__init__()
         self.add_item(MonthSelect(bot))
 
+# =========================================================
+# 削除用プルダウン (Snapshot Close)
+# =========================================================
 class SnapshotDeleteSelect(discord.ui.Select):
     def __init__(self, snapshots):
         options = []
@@ -85,6 +99,9 @@ class SnapshotDeleteView(discord.ui.View):
         super().__init__()
         self.add_item(SnapshotDeleteSelect(snapshots))
 
+# =========================================================
+# Ranking Cog 本体
+# =========================================================
 class Ranking(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -93,6 +110,9 @@ class Ranking(commands.Cog):
     async def get_db_pool(self):
         return await asyncpg.create_pool(config.DB_DSN)
 
+    # -----------------------------------------------------
+    # DiscordのメッセージUI作成 (Component v2)
+    # -----------------------------------------------------
     def create_ranking_view(self, title: str, rows, year: int, month: int, show_role_reward: bool = True, custom_url: str = None):
         container = ui.Container(accent_color=0x00ddff)
 
@@ -126,10 +146,12 @@ class Ranking(commands.Cog):
             container.add_item(ui.TextDisplay("-# 1か月ごとに切り替わります"))
             container.add_item(ui.Separator())
 
+        # ▼ 指定のテキストを追加しました
         container.add_item(ui.TextDisplay("### <:2_:1453233982647959752> Web上でさらに詳しく見ることができます"))
+        container.add_item(ui.TextDisplay("-# **<a:6_:1455555980816285730> 個人分析・全体分析・グラフ分析・チャンネル比較 などが可能**"))
 
         action_row = ui.ActionRow()
-        target_url = custom_url if custom_url else f"https://www.ymkw.top/month/{year}/{month}"
+        target_url = custom_url if custom_url else f"https://ymkw.top/month/{year}/{month}"
         
         action_row.add_item(
             ui.Button(
@@ -146,6 +168,9 @@ class Ranking(commands.Cog):
 
         return view
 
+    # -----------------------------------------------------
+    # 月次タスク
+    # -----------------------------------------------------
     @tasks.loop(time=[time(hour=0, minute=0)])
     async def monthly_task(self):
         now = datetime.now()
@@ -154,6 +179,9 @@ class Ranking(commands.Cog):
         guild = self.bot.get_guild(config.GUILD_ID)
         await self.run_ranking_logic(guild, last_month.year, last_month.month, is_auto=True)
 
+    # -----------------------------------------------------
+    # コマンド: /month
+    # -----------------------------------------------------
     @app_commands.command(name="month", description="【管理者用】指定した月のランキングを手動送信")
     async def open_month(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
@@ -161,6 +189,9 @@ class Ranking(commands.Cog):
         view = MonthSelectView(self.bot)
         await interaction.response.send_message("集計したい月を選択してください:", view=view, ephemeral=True)
 
+    # -----------------------------------------------------
+    # コマンド: /open (全期間・スナップショット作成)
+    # -----------------------------------------------------
     @app_commands.command(name="open", description="【管理者用】全期間のランキングを表示しスナップショットを作成")
     async def open_total(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
@@ -170,6 +201,7 @@ class Ranking(commands.Cog):
         
         pool = await self.get_db_pool()
         try:
+            # Deleted User を除外
             rows = await pool.fetch(f"""
                 SELECT
                     m.user_id,
@@ -190,7 +222,7 @@ class Ranking(commands.Cog):
                 await interaction.followup.send("データがありません")
                 return
 
-            snapshot_url = "https://www.ymkw.top/"
+            snapshot_url = "https://ymkw.top/"
             try:
                 snapshot_data = {
                     "title": f"Total Ranking - {datetime.now().strftime('%Y/%m/%d')}",
@@ -204,7 +236,7 @@ class Ranking(commands.Cog):
                     ) as resp:
                         if resp.status == 200:
                             res = await resp.json()
-                            snapshot_url = f"https://www.ymkw.top/open/{res['id']}"
+                            snapshot_url = f"https://ymkw.top/open/{res['id']}"
                             await interaction.followup.send(f"✅ スナップショットを作成しました！\nURL: {snapshot_url}")
                         else:
                             error_text = await resp.text()
@@ -229,6 +261,9 @@ class Ranking(commands.Cog):
         finally:
             await pool.close()
 
+    # -----------------------------------------------------
+    # コマンド: /close (スナップショット削除)
+    # -----------------------------------------------------
     @app_commands.command(name="close", description="【管理者用】作成したスナップショットを選択して削除")
     async def close_snapshot(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
@@ -252,12 +287,16 @@ class Ranking(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"エラーが発生しました: {e}")
 
+    # -----------------------------------------------------
+    # 共通ロジック
+    # -----------------------------------------------------
     async def run_ranking_logic(self, guild, year, month, channel=None, is_auto=False):
         pool = await self.get_db_pool()
         start_date = datetime(year, month, 1)
         end_date = (start_date + relativedelta(months=1)) - timedelta(seconds=1)
 
         try:
+            # Deleted User を除外
             rows = await pool.fetch(f"""
                 SELECT m.user_id, count(*) as count, u.display_name
                 FROM messages m
