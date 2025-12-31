@@ -17,9 +17,11 @@ EMOJI_THIRD = "<:third:1452958880379306024>"
 EXCLUDE_CHANNEL_ID = 1406033558757314752
 KING_ROLE_ID = 1452968848998531245
 
+# .envからAPI_SECRETを読み込む
 API_SECRET = os.getenv("API_SECRET", "default_insecure_secret_change_me")
 API_HEADERS = {"X-API-KEY": API_SECRET}
 
+# 削除済みユーザー除外フィルタ
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
 # =========================================================
@@ -119,6 +121,9 @@ class Ranking(commands.Cog):
     def create_ranking_view(self, title: str, rows, year: int, month: int, show_role_reward: bool = True, custom_url: str = None):
         container = ui.Container(accent_color=0x00ddff)
 
+        if month == 12:
+            container.add_item(ui.TextDisplay("**🎍あけましておめでとうございます🎍**"))
+
         container.add_item(ui.TextDisplay(f"# {title}"))
         container.add_item(ui.TextDisplay(f"-# <#{EXCLUDE_CHANNEL_ID}>はランキングに含まれません"))
 
@@ -150,7 +155,7 @@ class Ranking(commands.Cog):
             container.add_item(ui.Separator())
 
         container.add_item(ui.TextDisplay("### <:2_:1453233982647959752> Web上でさらに詳しく見ることができます"))
-        container.add_item(ui.TextDisplay("-# **<:1_:1453233921310589059> 個人分析・グラフ・チャンネル比較など**"))
+        container.add_item(ui.TextDisplay("-# **<a:6_:1455555980816285730> 個人分析・全体分析・グラフ分析・チャンネル比較 など**"))
 
         action_row = ui.ActionRow()
         target_url = custom_url if custom_url else f"https://ymkw.top/month/{year}/{month}"
@@ -176,8 +181,7 @@ class Ranking(commands.Cog):
     @tasks.loop(time=[time(hour=0, minute=0)])
     async def monthly_task(self):
         now = datetime.now()
-        if now.day != 1:
-            return
+        if now.day != 1: return
         last_month = now - relativedelta(months=1)
         guild = self.bot.get_guild(config.GUILD_ID)
         await self.run_ranking_logic(guild, last_month.year, last_month.month, is_auto=True)
@@ -243,23 +247,25 @@ class Ranking(commands.Cog):
                             await interaction.followup.send(f"✅ スナップショットを作成しました！\nURL: {snapshot_url}")
                         else:
                             error_text = await resp.text()
-                            print(f"Snapshot API Error: {resp.status} - {error_text}")
-                            await interaction.followup.send(f"❌ スナップショットの作成に失敗しました (API Error: {resp.status})")
+                            await interaction.followup.send(f"❌ API Error: {resp.status}")
                             return
             except Exception as e:
-                print(f"Snapshot Failed: {e}")
-                await interaction.followup.send(f"❌ スナップショットの作成に失敗しました: {e}")
+                await interaction.followup.send(f"❌ Failed: {e}")
                 return
 
             view = self.create_ranking_view(
-                "🏆 全期間の発言ランキング", 
+                "🏆 全期間の発言ランキング (スナップショット)", 
                 rows[:10], 
                 datetime.now().year, 
                 datetime.now().month, 
                 show_role_reward=False,
                 custom_url=snapshot_url
             )
-            await interaction.channel.send(view=view)
+            
+            await interaction.channel.send(
+                view=view,
+                allowed_mentions=discord.AllowedMentions.none()
+            )
 
         finally:
             await pool.close()
@@ -291,7 +297,7 @@ class Ranking(commands.Cog):
             await interaction.followup.send(f"エラーが発生しました: {e}")
 
     # -----------------------------------------------------
-    # 共通ロジック (ランキング集計)
+    # 共通ロジック
     # -----------------------------------------------------
     async def run_ranking_logic(self, guild, year, month, channel=None, is_auto=False):
         pool = await self.get_db_pool()
@@ -299,7 +305,6 @@ class Ranking(commands.Cog):
         end_date = (start_date + relativedelta(months=1)) - timedelta(seconds=1)
 
         try:
-            # Deleted User を除外するフィルタを追加
             rows = await pool.fetch(f"""
                 SELECT m.user_id, count(*) as count, u.display_name
                 FROM messages m
@@ -313,41 +318,36 @@ class Ranking(commands.Cog):
             """, start_date, end_date, config.GUILD_ID)
 
             if not rows:
-                if channel:
-                    await channel.send(f"{year}年{month}月のデータはありません。")
+                if channel: await channel.send(f"{year}年{month}月のデータはありません。")
                 return
 
-            title = f"<:1_:1453233921310589059> {year}年{month}月の発言ランキング！"
+            title = f"<:1_:1453233921310589059> {year}年{month}月の発言ランキングはこちら！"
             view = self.create_ranking_view(title, rows, year, month)
 
             target_channel = channel
             if is_auto and guild:
                 target_channel = guild.get_channel(config.ANNOUNCE_CHANNEL_ID)
             elif is_auto and not guild:
-                try:
-                    target_channel = await self.bot.fetch_channel(config.ANNOUNCE_CHANNEL_ID)
-                except:
-                    print(f"Error: Announce channel {config.ANNOUNCE_CHANNEL_ID} not found.")
+                try: target_channel = await self.bot.fetch_channel(config.ANNOUNCE_CHANNEL_ID)
+                except: pass
 
             if target_channel:
-                await target_channel.send(view=view)
+                await target_channel.send(
+                    view=view,
+                    allowed_mentions=discord.AllowedMentions.none()
+                )
 
             if rows and guild:
                 top_user_id = rows[0]['user_id']
                 king_role = guild.get_role(KING_ROLE_ID)
                 if king_role:
                     for m in king_role.members:
-                        try:
-                            await m.remove_roles(king_role)
-                        except:
-                            pass
-                    
+                        try: await m.remove_roles(king_role)
+                        except: pass
                     new_king = guild.get_member(top_user_id)
                     if new_king:
-                        try:
-                            await new_king.add_roles(king_role)
-                        except:
-                            pass
+                        try: await new_king.add_roles(king_role)
+                        except: pass
 
         except Exception as e:
             print(f"Ranking Error: {e}")

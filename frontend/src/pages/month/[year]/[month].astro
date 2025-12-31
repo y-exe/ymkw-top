@@ -5,13 +5,22 @@ import Dashboard from '../../../components/Dashboard.jsx';
 const { year, month } = Astro.params;
 const url = Astro.url;
 
-const now = new Date();
+// --- ロック判定 (JST対応) ---
+// サーバー時刻(UTC)に9時間足して無理やりJSTにする
+const nowUTC = new Date();
+const jstDate = new Date(nowUTC.getTime() + (9 * 60 * 60 * 1000));
+
+const currentYear = jstDate.getUTCFullYear();
+const currentMonth = jstDate.getUTCMonth() + 1;
+
 const targetYear = parseInt(year || "0");
 const targetMonth = parseInt(month || "0");
-const isRestricted = (targetYear > now.getFullYear()) || (targetYear === now.getFullYear() && targetMonth >= (now.getMonth() + 1));
 
+// 判定: 「対象が今の年より未来」 または 「年は同じだが対象月が今月以降」ならロック
+const isRestricted = (targetYear > currentYear) || (targetYear === currentYear && targetMonth >= currentMonth);
+
+// パスワードハッシュ (Web Crypto API)
 const ADMIN_PASSWORD_HASH = "2f11bf70add2518a3c218295612a992132459445ffd2e375db85402341b3d5f3";
-
 const isAuthorized = Astro.cookies.get('admin_auth')?.value === 'true';
 
 if (Astro.request.method === "POST") {
