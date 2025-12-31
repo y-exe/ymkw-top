@@ -69,7 +69,7 @@ const isDashboard = currentPath.includes('/month/') || currentPath.includes('/op
             <div class="flex-1 min-w-0 md:ml-80 flex flex-col transition-all mobile-content-pt relative">
                 <Header /> 
                 
-                <main class="px-4 md:px-8 lg:p-12 flex-1 pb-24">
+                <main class="px-4 md:px-8 lg:p-12 flex-1 pb-32">
                     {isDashboard && (
                         <div class="md:hidden mb-6 flex items-center justify-center text-[10px] font-bold text-gray-400 bg-white/90 py-3 px-5 rounded-2xl border border-gray-100 shadow-sm backdrop-blur-lg mx-auto w-fit">
                             <span class="text-gray-900 uppercase tracking-widest">{mode}</span>
@@ -81,22 +81,27 @@ const isDashboard = currentPath.includes('/month/') || currentPath.includes('/op
                     <slot />
                 </main>
 
-                {}
-                <footer class="mt-auto py-12 border-t border-gray-100 bg-white/50 backdrop-blur-sm">
+                {/* ▼ フッター修正 ▼ */}
+                <footer class="mt-auto py-12 border-t border-gray-100 bg-white/50 backdrop-blur-sm relative z-0">
                     <div class="max-w-7xl mx-auto px-8 flex flex-col items-center gap-8">
-                        <div class="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        {/* リンクエリア: ソースコード追加 */}
+                        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                             <a href="/terms" class="hover:text-blue-600 transition-colors">利用規約</a>
-                            <div class="w-1 h-1 bg-gray-200 rounded-full"></div>
+                            <span class="text-gray-300">/</span>
                             <a href="/privacy" class="hover:text-blue-600 transition-colors">プライバシーポリシー</a>
+                            <span class="text-gray-300">/</span>
+                            <a href="https://github.com/y-exe/ymkw-top" target="_blank" rel="noopener noreferrer" class="hover:text-black transition-colors flex items-center gap-1 group">
+                                ソースコード
+                                {/* External Link Icon */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                            </a>
                         </div>
+                        
+                        {/* コピーライトエリア: 普通の書体に修正 */}
                         <div class="flex flex-col items-center gap-2">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-[11px] font-black text-gray-900 font-outfit uppercase tracking-tighter italic shadow-sm">
-                                    © 2025 <span class="text-blue-600">ymkw.top</span>
-                                </span>
-                                <div class="w-[1px] h-3 bg-gray-200"></div>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Built by yexe</span>
-                            </div>
+                            <p class="text-xs text-gray-500 font-medium">
+                                © 2025 ymkw.top <span class="mx-1 text-gray-300">|</span> <span class="text-gray-400">Built by yexe</span>
+                            </p>
                         </div>
                     </div>
                 </footer>
