@@ -1,28 +1,34 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import Dashboard from '../../../components/Dashboard.jsx';
+import { createHash } from 'node:crypto';
 
 const { year, month } = Astro.params;
 const url = Astro.url;
 
-// --- ロック判定 ---
 const now = new Date();
 const targetYear = parseInt(year || "0");
 const targetMonth = parseInt(month || "0");
 const isRestricted = (targetYear > now.getFullYear()) || (targetYear === now.getFullYear() && targetMonth >= (now.getMonth() + 1));
 
-const ADMIN_PASSWORD = "ymkwdev1130";
+const ADMIN_PASSWORD_HASH = "2f11bf70add2518a3c218295612a992132459445ffd2e375db85402341b3d5f3";
+
 const isAuthorized = Astro.cookies.get('admin_auth')?.value === 'true';
 
 if (Astro.request.method === "POST") {
     try {
         const formData = await Astro.request.formData();
-        if (formData.get("password") === ADMIN_PASSWORD) {
-            // パスワード成功時
+        const inputPassword = formData.get("password")?.toString() || "";
+        
+        const inputHash = createHash('sha256').update(inputPassword).digest('hex');
+
+        if (inputHash === ADMIN_PASSWORD_HASH) {
             Astro.cookies.set('admin_auth', 'true', { path: '/', maxAge: 86400, httpOnly: true, secure: true, sameSite: 'lax' });
             return Astro.redirect(url.pathname + url.search);
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error("Auth Error:", e);
+    }
 }
 
 const channelId = url.searchParams.get('channel');
@@ -41,7 +47,6 @@ Astro.response.headers.set('Cache-Control', isRestricted ? 'no-store' : 'public,
                     <h2 class="text-2xl font-black text-gray-900 mb-2 font-outfit">Restricted Area</h2>
                     <p class="text-sm text-gray-500 mb-8 leading-relaxed">{year}年{month}月のレポートは未公開です。パスワードを入力してください。</p>
                     
-                    {/* ★ 修正: data-astro-reload を追加して完全再読み込みさせる */}
                     <form method="POST" class="space-y-4" data-astro-reload>
                         <input type="password" name="password" placeholder="Password" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-center font-bold outline-none focus:border-blue-500 transition-all" required />
                         <button type="submit" class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-all">Unlock</button>
@@ -50,7 +55,6 @@ Astro.response.headers.set('Cache-Control', isRestricted ? 'no-store' : 'public,
                     <button onclick="history.back()" class="mt-8 text-xs font-bold text-gray-400 hover:text-gray-900 flex items-center justify-center gap-2 mx-auto">前のページに戻る</button>
                 </div>
             </div>
-            {/* ロック画面表示時はローディングを即座に消す */}
             <script is:inline>
                 (function(){
                     const screen = document.getElementById('loading-screen');

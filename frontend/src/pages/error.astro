@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { WifiOff, ArrowLeft } from 'lucide-react';
+---
+
+<Layout title="Connection Error" hideNavigation={true}>
+    <div class="h-screen flex flex-col items-center justify-center p-6 bg-white font-sans text-center">
+        <div class="w-24 h-24 bg-red-50 text-red-400 rounded-[2rem] flex items-center justify-center mb-8 shadow-sm border border-red-100 animate-pulse">
+            <WifiOff className="w-10 h-10" />
+        </div>
+
+        <h1 class="text-4xl font-black text-gray-900 mb-2 font-outfit tracking-tight">API Connection Failed</h1>
+        <p class="text-sm font-bold text-gray-400 mb-8 tracking-wide">Communication Error</p>
+
+        <p class="text-sm text-gray-500 mb-12 leading-relaxed max-w-xs mx-auto">
+            APIサーバーへの接続に失敗しました。<br/>
+            サーバーが混み合っているか、<br/>
+            レート制限がかかっている可能性があります。<br/>
+            しばらくしても治んない場合は管理者までご連絡ください。
+        </p>
+
+        <button onclick="window.location.reload()" class="px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-all active:scale-95 shadow-xl shadow-gray-200 flex items-center gap-3">
+            <span>再読み込み</span>
+        </button>
+        
+        <a href="/" class="mt-6 text-xs text-gray-400 font-bold hover:text-gray-600 transition-colors">トップページへ戻る</a>
+    </div>
+</Layout>

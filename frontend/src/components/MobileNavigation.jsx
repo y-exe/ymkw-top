@@ -16,9 +16,11 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                     fetch(`${API_URL}/api/channels`),
                     fetch(`${API_URL}/api/snapshots`)
                 ]);
+                const channels = await cRes.json();
+                const snapshots = await sRes.json();
                 setData({ 
-                    channels: await cRes.json(), 
-                    snapshots: await sRes.json() 
+                    channels: Array.isArray(channels) ? channels : [], 
+                    snapshots: Array.isArray(snapshots) ? snapshots : [] 
                 });
             } catch (e) { console.error(e); }
         };
@@ -30,7 +32,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
         else document.body.style.overflow = 'unset';
     }, [isOpen, isLogoutModalOpen]);
 
-    const handleResetAuth = () => {
+    const handleLogout = () => {
         document.cookie.split(';').forEach(c => {
             document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/');
         });
@@ -57,8 +59,11 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     const userParam = searchParams.get('user') || '';
 
     const now = new Date();
+    now.setDate(1);
     now.setMonth(now.getMonth() - 1);
-    const monthlyBaseUrl = `/month/${now.getFullYear()}/${now.getMonth() + 1}`;
+    const prevYear = now.getFullYear();
+    const prevMonth = now.getMonth() + 1;
+    const monthlyBaseUrl = `/month/${prevYear}/${prevMonth}`;
     
     let allTimeUrl = '/no-snapshots';
     if (Array.isArray(data.snapshots) && data.snapshots.length > 0) {
@@ -91,7 +96,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                                )}
                            </button>
                        ) : (
-                           <button onClick={handleResetAuth} className="p-2 text-gray-400 focus:outline-none">
+                           <button onClick={() => window.location.reload()} className="p-2 text-gray-400 focus:outline-none">
                                <LogIn className="w-5 h-5" />
                            </button>
                        )}
@@ -99,7 +104,6 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                 </div>
             </div>
 
-            {/* ログアウト確認モーダル */}
             {isLogoutModalOpen && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-fade-in">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsLogoutModalOpen(false)} />
@@ -108,14 +112,13 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                         <h3 className="text-lg font-black text-gray-900 mb-2 font-outfit">Logout?</h3>
                         <p className="text-xs text-gray-500 mb-8 leading-relaxed">アカウントからログアウトします。</p>
                         <div className="flex flex-col gap-3">
-                            <button onClick={handleResetAuth} className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-200 active:scale-95 transition-all">ログアウト</button>
+                            <button onClick={handleLogout} className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-200 active:scale-95 transition-all">ログアウト</button>
                             <button onClick={() => setIsLogoutModalOpen(false)} className="w-full py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl active:bg-gray-100 transition-colors">キャンセル</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ドロワーメニュー */}
             {isOpen && (
                 <div className="fixed inset-0 z-[90] animate-fade-in">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
