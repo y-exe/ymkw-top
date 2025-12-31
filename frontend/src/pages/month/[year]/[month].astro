@@ -1,7 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import Dashboard from '../../../components/Dashboard.jsx';
-import { createHash } from 'node:crypto';
 
 const { year, month } = Astro.params;
 const url = Astro.url;
@@ -20,7 +19,10 @@ if (Astro.request.method === "POST") {
         const formData = await Astro.request.formData();
         const inputPassword = formData.get("password")?.toString() || "";
         
-        const inputHash = createHash('sha256').update(inputPassword).digest('hex');
+        const msgBuffer = new TextEncoder().encode(inputPassword);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
         if (inputHash === ADMIN_PASSWORD_HASH) {
             Astro.cookies.set('admin_auth', 'true', { path: '/', maxAge: 86400, httpOnly: true, secure: true, sameSite: 'lax' });
