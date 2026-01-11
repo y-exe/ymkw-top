@@ -15,7 +15,7 @@
     "@astrojs/tailwind": "^6.0.2",
     "@tailwindcss/vite": "^4.1.18",
     "@types/nprogress": "^0.2.3",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.16.6",
     "clsx": "^2.1.1",
