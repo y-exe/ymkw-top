@@ -23,10 +23,12 @@ const date = new Date();
 date.setDate(0); 
 const prevMonthYear = date.getFullYear();
 const prevMonth = date.getMonth() + 1;
+
+const title = "Top";
+const description = "YoutuberのDiscrd鯖であるやまかわてるき鯖の統計データを可視化する公認WEBダッシュボードです";
 ---
 
-<Layout title="Top" hideNavigation={true}>
-    {}
+<Layout title={title} description={description} hideNavigation={true}>
     <style>
         @font-face { font-family: 'ZakkuriGothic'; src: url('/fonts/ZakkuriGothicFree-Black.otf') format('opentype'); font-display: swap; }
         :root { --box-size: 14rem; }

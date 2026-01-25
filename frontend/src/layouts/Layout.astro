@@ -8,7 +8,14 @@ import MobileNavigation from '../components/MobileNavigation.jsx';
 import 'nprogress/nprogress.css';
 import '../styles/global.css';
 
-const { title, hideNavigation = false } = Astro.props;
+const { 
+    title, 
+    description = "YoutuberのDiscrd鯖であるやまかわてるき鯖の活動量、ランキング、統計情報を可視化する公認WEBダッシュボード。個人の発言数推移やサーバー全体のトレンドを確認できます。",
+    image,
+    hideNavigation = false,
+    noindex = false,
+    breadcrumbs = [] 
+} = Astro.props;
 
 const userId = Astro.cookies.get('user_id')?.value;
 const userNameRaw = Astro.cookies.get('user_name')?.value;
@@ -25,6 +32,30 @@ const mode = parts[0] === 'open' ? 'Overview' : 'Monthly';
 const year = parts[1];
 const month = parts[2];
 const isDashboard = currentPath.includes('/month/') || currentPath.includes('/open/');
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || "https://ymkw.top");
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "やまかわてるき鯖WEBダッシュボード",
+  "url": "https://www.ymkw.top",
+  "description": description
+};
+
+let breadcrumbSchema = null;
+if (breadcrumbs.length > 0) {
+    breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": breadcrumbs.map((item, index) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "name": item.name,
+            "item": item.item
+        }))
+    };
+}
 ---
 
 <!doctype html>
@@ -33,10 +64,32 @@ const isDashboard = currentPath.includes('/month/') || currentPath.includes('/op
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<title>{title} | やまかわてるき鯖 統計</title>
+        <link rel="sitemap" href="/sitemap-index.xml" />
+		
+        <title>{title} | やまかわてるき鯖WEBダッシュボード</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalURL} />
+        {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalURL} />
+        <meta property="og:title" content={`${title} | ymkw.top`} />
+        <meta property="og:description" content={description} />
+        {image && <meta property="og:image" content={image} />}
+
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={canonicalURL} />
+        <meta property="twitter:title" content={`${title} | ymkw.top`} />
+        <meta property="twitter:description" content={description} />
+        {image && <meta property="twitter:image" content={image} />}
+
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+        
+        <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+        {breadcrumbSchema && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />}
+        
         <ViewTransitions />
         <style is:global>
             #nprogress .bar { background: #3b82f6 !important; height: 3px !important; z-index: 10001 !important; }
@@ -81,10 +134,8 @@ const isDashboard = currentPath.includes('/month/') || currentPath.includes('/op
                     <slot />
                 </main>
 
-                {/* ▼ フッター修正 ▼ */}
                 <footer class="mt-auto py-12 border-t border-gray-100 bg-white/50 backdrop-blur-sm relative z-0">
                     <div class="max-w-7xl mx-auto px-8 flex flex-col items-center gap-8">
-                        {/* リンクエリア: ソースコード追加 */}
                         <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                             <a href="/terms" class="hover:text-blue-600 transition-colors">利用規約</a>
                             <span class="text-gray-300">/</span>
@@ -92,12 +143,10 @@ const isDashboard = currentPath.includes('/month/') || currentPath.includes('/op
                             <span class="text-gray-300">/</span>
                             <a href="https://github.com/y-exe/ymkw-top" target="_blank" rel="noopener noreferrer" class="hover:text-black transition-colors flex items-center gap-1 group">
                                 ソースコード
-                                {/* External Link Icon */}
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                             </a>
                         </div>
                         
-                        {/* コピーライトエリア: 普通の書体に修正 */}
                         <div class="flex flex-col items-center gap-2">
                             <p class="text-xs text-gray-500 font-medium">
                                 © 2025 ymkw.top <span class="mx-1 text-gray-300">|</span> <span class="text-gray-400">Built by yexe</span>

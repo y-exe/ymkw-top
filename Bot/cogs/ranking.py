@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 import asyncpg
 from datetime import datetime, timedelta, time
 from dateutil.relativedelta import relativedelta
+from zoneinfo import ZoneInfo
 import config
 import aiohttp
 import os
@@ -45,7 +46,8 @@ class MonthSelect(discord.ui.Select):
     def __init__(self, bot):
         self.bot = bot
         options = []
-        now = datetime.now()
+        # JSTで現在時刻を取得
+        now = datetime.now(ZoneInfo("Asia/Tokyo"))
         for i in range(12):
             date = now - relativedelta(months=i)
             label = date.strftime("%Y年 %m月")
@@ -178,9 +180,9 @@ class Ranking(commands.Cog):
     # -----------------------------------------------------
     # 月次タスク
     # -----------------------------------------------------
-    @tasks.loop(time=[time(hour=0, minute=0)])
+    @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Tokyo"))])
     async def monthly_task(self):
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("Asia/Tokyo"))
         if now.day != 1: return
         last_month = now - relativedelta(months=1)
         guild = self.bot.get_guild(config.GUILD_ID)
@@ -231,7 +233,7 @@ class Ranking(commands.Cog):
             snapshot_url = "https://ymkw.top/"
             try:
                 snapshot_data = {
-                    "title": f"Total Ranking - {datetime.now().strftime('%Y/%m/%d')}",
+                    "title": f"Total Ranking - {datetime.now(ZoneInfo('Asia/Tokyo')).strftime('%Y/%m/%d')}",
                     "rows": [dict(r) for r in rows],
                 }
                 
@@ -253,11 +255,12 @@ class Ranking(commands.Cog):
                 await interaction.followup.send(f"❌ Failed: {e}")
                 return
 
+            now_jst = datetime.now(ZoneInfo("Asia/Tokyo"))
             view = self.create_ranking_view(
                 "🏆 全期間の発言ランキング (スナップショット)", 
                 rows[:10], 
-                datetime.now().year, 
-                datetime.now().month, 
+                now_jst.year, 
+                now_jst.month, 
                 show_role_reward=False,
                 custom_url=snapshot_url
             )
