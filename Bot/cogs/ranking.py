@@ -151,7 +151,7 @@ class Ranking(commands.Cog):
 
         if show_role_reward and top_user_id:
             container.add_item(ui.TextDisplay(
-                f"**<:4_:1453234089980334255> 1位の <@{top_user_id}> には <@&{KING_ROLE_ID}> ロールが付与されます**"
+                f"**<:4_:1453234089980334255> 1位の <@{top_user_id}> には <@&1452967299404271686> ロールが付与されます**"
             ))
             container.add_item(ui.TextDisplay("-# 1か月ごとに切り替わります"))
             container.add_item(ui.Separator())

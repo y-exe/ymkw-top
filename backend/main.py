@@ -36,7 +36,6 @@ DB_DSN = raw_dsn.replace("localhost", "127.0.0.1") if "localhost" in raw_dsn els
 
 app = FastAPI()
 
-# 許可するドメインリスト
 ALLOWED_ORIGINS = [
     "https://ymkw.top",
     "https://www.ymkw.top",
@@ -83,7 +82,7 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     is_website = is_allowed_origin or is_allowed_referer
 
     if not (is_bot or is_website):
-        if request.url.path not in ["/docs", "/openapi.json", "/favicon.ico"]:
+        if request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
             return JSONResponse(status_code=403, content={"detail": "Access Denied: Direct access is not allowed."})
 
     client_ip = request.headers.get("CF-Connecting-IP") or request.client.host
@@ -151,6 +150,11 @@ def format_ranking_response(rows):
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
 # --- Endpoints ---
+
+@app.get("/")
+@app.get("/api")
+async def root():
+    return {"status": "ok", "message": "ymkw.top API is running. Use /api/channels etc."}
 
 @app.get("/api/channels", response_model=List[ChannelItem])
 async def get_channels(response: Response):

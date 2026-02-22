@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-DB_DSN = os.getenv("DB_DSN")
+raw_dsn = os.getenv("DB_DSN")
+DB_DSN = raw_dsn.replace("127.0.0.1", "postgres-db").replace("localhost", "postgres-db") if raw_dsn else None
 
 GUILD_ID = int(os.getenv("GUILD_ID", 0))
 OWNER_ID = int(os.getenv("OWNER_ID", 0))

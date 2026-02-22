@@ -13,3 +13,4 @@
 **/.DS_Store
 
 **/ymkw_api_diskcache_v*
+backend/test_db.py
