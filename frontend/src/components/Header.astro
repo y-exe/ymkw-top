@@ -10,15 +10,15 @@ import {
 import { Home } from "lucide-react";
 import { LogoutButton, LoginButton } from "./AuthButtons.jsx";
 import { ToggleTheme } from "./ToggleTheme.jsx";
+import { fetchAPI } from "@/lib/api";
 
 const { url } = Astro;
 const channelId = url.searchParams.get("channel");
 
-const API_URL = "https://api.ymkw.top";
 let channelName = "All Channels";
 if (channelId) {
   try {
-    const res = await fetch(`${API_URL}/api/channels`);
+    const res = await fetchAPI("/api/channels");
     if (res.ok) {
       const channels: any[] = await res.json();
       const found = channels.find(

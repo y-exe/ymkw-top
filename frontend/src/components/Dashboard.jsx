@@ -7,6 +7,7 @@ import ActivityHeatmap from './charts/ActivityHeatmap';
 import ChannelPieChart from './charts/ChannelPieChart';
 import RankingList from './RankingList';
 import MouseEffectCard from './MouseEffectCard';
+import { fetchAPI } from '@/lib/api';
 
 export default function Dashboard({ year, month, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -17,7 +18,6 @@ export default function Dashboard({ year, month, channelId, userId }) {
         window.__ymkw_data_ready = false;
 
         const fetchData = async () => {
-            const API_URL = "https://api.ymkw.top";
             const params = new URLSearchParams();
             if (channelId) params.append('channel_id', channelId);
 
@@ -27,12 +27,12 @@ export default function Dashboard({ year, month, channelId, userId }) {
 
             try {
                 const responses = await Promise.all([
-                    fetch(`${API_URL}/api/ranking/monthly/${year}/${month}?${params.toString()}`),
-                    fetch(`${API_URL}/api/stats/history/${year}/${month}?${histParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/heatmap/${year}/${month}?${params.toString()}`),
-                    fetch(`${API_URL}/api/stats/analysis/${year}/${month}?${params.toString()}`),
-                    userId && userId !== 'guest' ? fetch(`${API_URL}/api/stats/analysis/${year}/${month}?${params.toString()}&user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetch(`${API_URL}/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
+                    fetchAPI(`/api/ranking/monthly/${year}/${month}?${params.toString()}`),
+                    fetchAPI(`/api/stats/history/${year}/${month}?${histParams.toString()}`),
+                    fetchAPI(`/api/stats/heatmap/${year}/${month}?${params.toString()}`),
+                    fetchAPI(`/api/stats/analysis/${year}/${month}?${params.toString()}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/${year}/${month}?${params.toString()}&user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
                 ]);
 
                 for (const res of responses) {

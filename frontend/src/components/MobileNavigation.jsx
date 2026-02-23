@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, LogIn, AlertCircle, LayoutGrid, Hash } from 'lucide-react';
 import MonthSelector from './MonthSelector';
 import SnapshotSelector from './SnapshotSelector';
+import { fetchAPI } from '@/lib/api';
 
 export default function MobileNavigation({ user = {}, currentPath = '', queryParams = '' }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -11,10 +12,9 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     useEffect(() => {
         const fetchNavData = async () => {
             try {
-                const API_URL = "https://api.ymkw.top";
                 const [cRes, sRes] = await Promise.all([
-                    fetch(`${API_URL}/api/channels`),
-                    fetch(`${API_URL}/api/snapshots`)
+                    fetchAPI("/api/channels"),
+                    fetchAPI("/api/snapshots")
                 ]);
                 setData({
                     channels: await cRes.json(),

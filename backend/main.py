@@ -64,8 +64,8 @@ def set_cache(key: str, data: Any, ttl: int = 600):
     cache.set(key, data, expire=ttl)
 
 RATE_LIMIT_WINDOW = 10
-MAX_REQUESTS = 73
-BLOCK_DURATION = 7200
+MAX_REQUESTS = 150
+BLOCK_DURATION = 600
 
 @app.middleware("http")
 async def security_and_rate_limit_middleware(request: Request, call_next):
@@ -81,8 +81,14 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     
     is_website = is_allowed_origin or is_allowed_referer
 
-    if not (is_bot or is_website):
-        if request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
+    # SSR (Cloudflare Workers等) からのGETリクエストはOrigin/Refererが付かないため許可
+    is_ssr_request = request.method == "GET" and not origin and not referer
+
+    # 不正なOriginが明示的に付いている場合はブロック（SSRではなく外部からのアクセス）
+    has_wrong_origin = origin and not is_allowed_origin
+
+    if not (is_bot or is_website or is_ssr_request):
+        if has_wrong_origin or request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
             return JSONResponse(status_code=403, content={"detail": "Access Denied: Direct access is not allowed."})
 
     client_ip = request.headers.get("CF-Connecting-IP") or request.client.host

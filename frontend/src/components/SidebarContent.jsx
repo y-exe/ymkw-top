@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MonthSelector from './MonthSelector';
 import SnapshotSelector from './SnapshotSelector';
 import { Hash, LayoutGrid } from 'lucide-react';
+import { fetchAPI } from '@/lib/api';
 
 export default function SidebarContent({ currentPath, queryParams, pageMode, currentId, currentMonth }) {
     const [data, setData] = useState({ channels: [], snapshots: [] });
@@ -10,10 +11,9 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
     useEffect(() => {
         const fetchSidebarData = async () => {
             try {
-                const API_URL = "https://api.ymkw.top";
                 const [cRes, sRes] = await Promise.all([
-                    fetch(`${API_URL}/api/channels`),
-                    fetch(`${API_URL}/api/snapshots`)
+                    fetchAPI("/api/channels"),
+                    fetchAPI("/api/snapshots")
                 ]);
                 setData({ channels: await cRes.json(), snapshots: await sRes.json() });
             } catch (e) { console.error(e); }

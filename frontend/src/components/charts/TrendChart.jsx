@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Search, User, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { fetchAPI } from '@/lib/api';
 
 const CustomTooltip = ({ active, payload, label, users, highlightUserId, focusedUserId }) => {
     if (active && payload && payload.length) {
@@ -77,7 +78,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
         const delayDebounceFn = setTimeout(async () => {
             if (searchTerm.trim().length > 0) {
                 try {
-                    const res = await fetch(`https://api.ymkw.top/api/users/search?q=${encodeURIComponent(searchTerm)}`);
+                    const res = await fetchAPI(`/api/users/search?q=${encodeURIComponent(searchTerm)}`);
                     if (res.ok) setSearchResults(await res.json());
                 } catch (e) { console.error(e); }
             } else { setSearchResults([]); }
@@ -92,7 +93,6 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
     const { chart_data: rawChartData, users, top_user_id } = apiData;
     const userIdsInChart = Object.keys(users || {});
 
-    // 各ユーザーの発言がある日の前後に0を挿入し、線が自然に立ち上がる/下がるようにする
     const chart_data = rawChartData.map((dayData, idx) => {
         const patched = { ...dayData };
         userIdsInChart.forEach((uid) => {
@@ -101,7 +101,6 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
             const nextHasValue = idx < rawChartData.length - 1 && rawChartData[idx + 1][uid] != null && rawChartData[idx + 1][uid] > 0;
 
             if (!hasValue) {
-                // この日に値がないけど、前日か翌日に値がある → 0を設定
                 if (prevHasValue || nextHasValue) {
                     patched[uid] = 0;
                 }

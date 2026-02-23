@@ -1,14 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Calendar, History, ArrowRight } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 export const prerender = false;
 
-const API_URL = "https://api.ymkw.top";
 let latestSnapshotId = null;
 
 try {
-  const res = await fetch(`${API_URL}/api/snapshots`);
+  const res = await fetchAPI("/api/snapshots");
   if (res.ok) {
     const list = await res.json();
     if (Array.isArray(list) && list.length > 0) {

@@ -7,6 +7,7 @@ import ActivityHeatmap from './charts/ActivityHeatmap';
 import ChannelPieChart from './charts/ChannelPieChart';
 import RankingList from './RankingList';
 import MouseEffectCard from './MouseEffectCard';
+import { fetchAPI } from '@/lib/api';
 
 export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -17,9 +18,8 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
         window.__ymkw_data_ready = false;
 
         const fetchAllData = async () => {
-            const API_URL = "https://api.ymkw.top";
             try {
-                const infoRes = await fetch(`${API_URL}/api/snapshots/${snapshotId}`);
+                const infoRes = await fetchAPI(`/api/snapshots/${snapshotId}`);
                 if (!infoRes.ok) throw new Error("Snapshot not found");
                 const info = await infoRes.json();
                 setSnapshotInfo(info);
@@ -34,12 +34,12 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 if (focusedUserId) histParams.append('user_id', focusedUserId);
 
                 const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = await Promise.all([
-                    fetch(`${API_URL}/api/ranking/total?${baseParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/history/total?${histParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/heatmap/total?${baseParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/analysis/total?${baseParams.toString()}`),
-                    userId && userId !== 'guest' ? fetch(`${API_URL}/api/stats/analysis/total?${baseParams.toString()}&user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetch(`${API_URL}/api/stats/channels_distribution/total?${baseParams.toString()}`) : Promise.resolve(null)
+                    fetchAPI(`/api/ranking/total?${baseParams.toString()}`),
+                    fetchAPI(`/api/stats/history/total?${histParams.toString()}`),
+                    fetchAPI(`/api/stats/heatmap/total?${baseParams.toString()}`),
+                    fetchAPI(`/api/stats/analysis/total?${baseParams.toString()}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/total?${baseParams.toString()}&user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total?${baseParams.toString()}`) : Promise.resolve(null)
                 ]);
 
                 const ranking = await rankRes.json();
