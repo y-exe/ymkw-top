@@ -35,18 +35,6 @@ export default function Dashboard({ year, month, channelId, userId }) {
                     !channelId ? fetchAPI(`/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
                 ]);
 
-                for (const res of responses) {
-                    if (res && !res.ok) {
-                        if (res.status === 404) continue;
-
-                        console.error(`API Error: ${res.status} on ${res.url}`);
-                        if (res.status === 429 || res.status >= 500) {
-                            window.location.href = '/error';
-                            return;
-                        }
-                    }
-                }
-
                 const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = responses;
                 const ranking = await rankRes.json();
                 const trend = await trendRes.json();
@@ -63,8 +51,11 @@ export default function Dashboard({ year, month, channelId, userId }) {
 
                 setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
             } catch (error) {
-                console.error("Dashboard Load Error (Network Failure):", error);
-                window.location.href = '/error';
+                console.error("Dashboard Load Error:", error);
+                const code = error.status || (error.name === 'TypeError' ? 'NetworkError' : 'unknown');
+                const urlParam = error.url ? `&url=${encodeURIComponent(error.url)}` : '';
+                const msgParam = error.message ? `&msg=${encodeURIComponent(error.message)}` : '';
+                window.location.href = `/error?code=${code}${urlParam}${msgParam}`;
             } finally {
                 setIsLoaded(true);
                 window.__ymkw_data_ready = true;

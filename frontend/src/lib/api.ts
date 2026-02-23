@@ -6,6 +6,22 @@ interface FetchAPIOptions extends Omit<RequestInit, 'signal'> {
 }
 
 /**
+ * APIエラー用のカスタムクラス
+ * ステータスコードを保持できるようにする
+ */
+export class APIError extends Error {
+    status: number;
+    url: string;
+
+    constructor(message: string, status: number, url: string) {
+        super(message);
+        this.name = "APIError";
+        this.status = status;
+        this.url = url;
+    }
+}
+
+/**
  * リトライ・タイムアウト・SSR Refererヘッダー付きのfetchユーティリティ
  * - サーバーサイド（SSR）実行時は自動でRefererヘッダーを付与（403防止）
  * - 429/5xxエラー時は指数バックオフでリトライ
@@ -38,19 +54,33 @@ export async function fetchAPI(
             // 成功 or 404 はそのまま返す（リトライ不要）
             if (res.ok || res.status === 404) return res;
 
+            // 全ての non-ok レスポンス（404除く）を APIError として扱う
+            const apiError = new APIError(`HTTP ${res.status}`, res.status, url);
+            lastError = apiError;
+
             // 429 or 5xx はリトライ対象
             if (res.status === 429 || res.status >= 500) {
-                lastError = new Error(`HTTP ${res.status}`);
                 if (attempt < retries) {
                     await delay(1000 * Math.pow(2, attempt));
                     continue;
                 }
             }
 
-            // その他のエラー（403等）はリトライせずそのまま返す
-            return res;
+            // リトライ対象外（403等）またはリトライ上限到達
+            throw apiError;
         } catch (err) {
-            lastError = err as Error;
+            // APIErrorでない場合（ネットワークエラー等）はAPIErrorでラップしてURL情報を保持
+            if (!(err instanceof APIError)) {
+                lastError = new APIError(err instanceof Error ? err.message : "Network failure", 0, url);
+                // ネットワークエラーの名前を保持（Dashboard側でNetworkError判定に使うため）
+                if (err instanceof Error) {
+                    lastError.name = err.name;
+                }
+            } else {
+                lastError = err;
+            }
+
+            // リトライ可能な場合のみ続行
             if (attempt < retries) {
                 await delay(1000 * Math.pow(2, attempt));
                 continue;
@@ -58,7 +88,8 @@ export async function fetchAPI(
         }
     }
 
-    throw lastError || new Error("Fetch failed after retries");
+    if (lastError) throw lastError;
+    throw new Error("Fetch failed after retries");
 }
 
 function delay(ms: number): Promise<void> {
