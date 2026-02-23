@@ -17,7 +17,7 @@ export default function ChannelPieChart({ data }) {
         const { width, height } = entry.contentRect;
         if (width > 0 && height > 0) {
           requestAnimationFrame(() => {
-             setShouldRender(true);
+            setShouldRender(true);
           });
         }
       }
@@ -31,21 +31,20 @@ export default function ChannelPieChart({ data }) {
   if (!data || data.length === 0) return null;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-full">
-      <h3 className="text-lg font-bold text-gray-900 mb-2">Channel Distribution</h3>
-      <p className="text-xs text-gray-500 mb-4">Top 10 Active Channels</p>
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
+      <h3 className="text-lg font-bold text-foreground mb-2">Channel Distribution</h3>
+      <p className="text-xs text-muted-foreground mb-4">Top 10 Active Channels</p>
 
-      {/* ★ 修正: サイズ監視 */}
-      <div 
+      <div
         ref={containerRef}
         style={{ width: '100%', height: '300px', position: 'relative', display: 'block' }}
       >
         {!shouldRender ? (
-            <div className="absolute inset-0 bg-gray-50 rounded-xl animate-pulse" />
+          <div className="absolute inset-0 bg-muted rounded-xl animate-pulse" />
         ) : (
-            <ResponsiveContainer width="100%" height="100%" debounce={50}>
+          <ResponsiveContainer width="100%" height="100%" debounce={50}>
             <PieChart>
-                <Pie
+              <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
@@ -53,18 +52,29 @@ export default function ChannelPieChart({ data }) {
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
-                >
+              >
                 {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                 ))}
-                </Pie>
-                <Tooltip 
-                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'}}
-                    itemStyle={{color: '#1e293b', fontWeight: 'bold'}}
-                />
-                <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{fontSize: '11px', fontFamily: 'JetBrains Mono'}} />
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  borderRadius: '12px',
+                  border: '1px solid hsl(var(--border))',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                  backgroundColor: 'hsl(var(--popover))',
+                  color: 'hsl(var(--popover-foreground))',
+                }}
+                itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold' }}
+              />
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                wrapperStyle={{ fontSize: '11px', fontFamily: 'JetBrains Mono', color: 'hsl(var(--muted-foreground))' }}
+              />
             </PieChart>
-            </ResponsiveContainer>
+          </ResponsiveContainer>
         )}
       </div>
     </div>

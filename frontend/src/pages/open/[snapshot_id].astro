@@ -1,34 +1,41 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import SnapshotDashboard from '../../components/SnapshotDashboard.jsx';
+import Layout from "../../layouts/Layout.astro";
+import SnapshotDashboard from "../../components/SnapshotDashboard.jsx";
 
 const { snapshot_id } = Astro.params;
 const url = Astro.url;
 
-if (snapshot_id === 'total') return Astro.redirect('/');
+if (snapshot_id === "total") return Astro.redirect("/");
 
-const channelId = url.searchParams.get('channel');
-let userId = url.searchParams.get('user') || Astro.cookies.get('user_id')?.value;
-if (userId === 'guest') userId = null;
+const channelId = url.searchParams.get("channel");
+let userId =
+  url.searchParams.get("user") || Astro.cookies.get("user_id")?.value;
+if (userId === "guest") userId = null;
 
-Astro.response.headers.set('Cache-Control', 'public, s-maxage=86400, max-age=3600');
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, s-maxage=86400, max-age=3600",
+);
 
-// SEO & Breadcrumbs
 const pageTitle = `Snapshot #${snapshot_id}`;
 const pageDescription = `やまかわてるき鯖の全期間統計スナップショット #${snapshot_id} の詳細データ。過去の活動履歴、累計ランキング、ユーザー別統計を確認できます。`;
 
 const breadcrumbs = [
-    { name: "Top", item: "https://www.ymkw.top/" },
-    { name: "Snapshots", item: "https://www.ymkw.top/" },
-    { name: `#${snapshot_id}`, item: `https://www.ymkw.top/open/${snapshot_id}` }
+  { name: "Top", item: "https://www.ymkw.top/" },
+  { name: "Snapshots", item: "https://www.ymkw.top/" },
+  { name: `#${snapshot_id}`, item: `https://www.ymkw.top/open/${snapshot_id}` },
 ];
 ---
 
-<Layout title={pageTitle} description={pageDescription} breadcrumbs={breadcrumbs}>
-    <SnapshotDashboard 
-        client:load 
-        snapshotId={snapshot_id} 
-        channelId={channelId} 
-        userId={userId} 
-    />
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  breadcrumbs={breadcrumbs}
+>
+  <SnapshotDashboard
+    client:load
+    snapshotId={snapshot_id}
+    channelId={channelId}
+    userId={userId}
+  />
 </Layout>

@@ -16,9 +16,9 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                     fetch(`${API_URL}/api/channels`),
                     fetch(`${API_URL}/api/snapshots`)
                 ]);
-                setData({ 
-                    channels: await cRes.json(), 
-                    snapshots: await sRes.json() 
+                setData({
+                    channels: await cRes.json(),
+                    snapshots: await sRes.json()
                 });
             } catch (e) { console.error(e); }
         };
@@ -52,7 +52,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     const pageMode = pathParts[0] === 'open' ? 'open' : 'month';
     const currentId = pathParts[1];
     const currentMonth = pathParts[2];
-    
+
     const searchParams = new URLSearchParams(queryParams);
     const currentChannelId = searchParams.get('channel');
     const userParam = searchParams.get('user') || '';
@@ -63,7 +63,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     const prevYear = now.getFullYear();
     const prevMonth = now.getMonth() + 1;
     const monthlyBaseUrl = `/month/${prevYear}/${prevMonth}`;
-    
+
     let allTimeUrl = '/no-snapshots';
     if (Array.isArray(data.snapshots) && data.snapshots.length > 0) {
         allTimeUrl = `/open/${data.snapshots[0].snapshot_id}?user=${userParam}`;
@@ -79,26 +79,26 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                     <button onClick={() => setIsOpen(!isOpen)} className="p-2 -ml-2 text-gray-900 active:scale-90 transition-transform focus:outline-none">
                         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
-                    
+
                     <a href="/" className="flex items-center gap-2">
                         <img src="https://i.ibb.co/Qv4SzXdc/fd6ab2714672b2efc0b4ebb9c4f93eaf-1.webp" className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
                         <span className="font-black text-xs uppercase tracking-tighter text-gray-900 font-outfit">ymkw.top</span>
                     </a>
 
                     <div className="w-9 flex justify-end">
-                       {user?.id && user.id !== 'guest' ? (
-                           <button onClick={() => setIsLogoutModalOpen(true)} className="active:scale-90 transition-transform focus:outline-none">
-                               {user.avatar ? (
-                                   <img src={user.avatar} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" />
-                               ) : (
-                                   <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold uppercase italic">{user.name ? user.name[0] : 'U'}</div>
-                               )}
-                           </button>
-                       ) : (
-                           <button onClick={handleResetAuth} className="p-2 text-gray-400 focus:outline-none">
-                               <LogIn className="w-5 h-5" />
-                           </button>
-                       )}
+                        {user?.id && user.id !== 'guest' ? (
+                            <button onClick={() => setIsLogoutModalOpen(true)} className="active:scale-90 transition-transform focus:outline-none">
+                                {user.avatar ? (
+                                    <img src={user.avatar} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold uppercase italic">{user.name ? user.name[0] : 'U'}</div>
+                                )}
+                            </button>
+                        ) : (
+                            <button onClick={handleResetAuth} className="p-2 text-gray-400 focus:outline-none">
+                                <LogIn className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

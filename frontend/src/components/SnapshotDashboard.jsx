@@ -6,6 +6,7 @@ import TrendChart from './charts/TrendChart';
 import ActivityHeatmap from './charts/ActivityHeatmap';
 import ChannelPieChart from './charts/ChannelPieChart';
 import RankingList from './RankingList';
+import MouseEffectCard from './MouseEffectCard';
 
 export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -28,7 +29,7 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 if (channelId) baseParams.append('channel_id', channelId);
 
                 const histParams = new URLSearchParams(baseParams);
-                
+
                 if (userId && userId !== 'guest') histParams.append('user_id', userId);
                 if (focusedUserId) histParams.append('user_id', focusedUserId);
 
@@ -67,41 +68,40 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     if (!snapshotInfo || !data) return <div className="min-h-[80vh]"></div>;
 
     return (
-        <div className="animate-fade-in">
-            <PageHeader 
-                title={snapshotInfo.title} 
-                subTitle="History Snapshot" 
-                badge={`ID: #${snapshotId}`} 
-                channelId={channelId} 
-                dateText={`Recorded: ${new Date(snapshotInfo.created_at).toLocaleString('ja-JP')}`} 
-            />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-3 flex flex-col gap-6 min-w-0">
-                    <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
-                    {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
-                    
-                    <TrendChart 
-                        key={`trend-${focusedUserId}`}
-                        apiData={data.trend} 
-                        highlightUserId={userId} 
-                        focusedUserId={focusedUserId}
-                        onSearchUser={(id) => setFocusedUserId(id)} 
-                    />
-                    
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                        <div className="xl:col-span-2 min-w-0"><ActivityHeatmap data={data.heatmap} /></div>
-                        <div className="xl:col-span-1 h-full min-h-[300px]">
-                            {!channelId ? <ChannelPieChart data={data.pie} /> : <div className="bg-gray-50 border border-gray-200 rounded-[2rem] p-6 h-full flex items-center justify-center text-gray-400 text-[10px] font-black uppercase tracking-widest text-center">AI Summary Coming Soon</div>}
+        <MouseEffectCard className="min-h-screen">
+            <div className="animate-fade-in">
+                <PageHeader
+                    title={snapshotInfo.title}
+                    subTitle="History Snapshot"
+                />
+
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div className="lg:col-span-3 flex flex-col gap-6 min-w-0">
+                        <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
+                        {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
+
+                        <TrendChart
+                            key={`trend-${focusedUserId}`}
+                            apiData={data.trend}
+                            highlightUserId={userId}
+                            focusedUserId={focusedUserId}
+                            onSearchUser={(id) => setFocusedUserId(id)}
+                        />
+
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            <div className="xl:col-span-2 min-w-0"><ActivityHeatmap data={data.heatmap} /></div>
+                            <div className="xl:col-span-1 h-full min-h-[300px]">
+                                {!channelId ? <ChannelPieChart data={data.pie} /> : <div className="bg-card border border-border rounded-xl p-6 h-full flex items-center justify-center text-muted-foreground text-xs font-bold uppercase tracking-widest text-center shadow-sm">AI Summary Coming Soon</div>}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="lg:col-span-1 min-w-0">
+                        <div className="sticky top-20">
+                            <RankingList data={data.ranking} highlightUserId={userId} />
                         </div>
                     </div>
                 </div>
-                <div className="lg:col-span-1 min-w-0">
-                    <div className="sticky top-20">
-                        <RankingList data={data.ranking} highlightUserId={userId} />
-                    </div>
-                </div>
             </div>
-        </div>
+        </MouseEffectCard>
     );
 }

@@ -1,29 +1,39 @@
 ---
-import SidebarContent from './SidebarContent.jsx';
+import SidebarContent from "./SidebarContent.jsx";
 
 const url = Astro.url;
 const currentPath = url.pathname;
 const queryParams = url.search;
-const pathParts = currentPath.split('/').filter(Boolean);
-const pageMode = pathParts[0] === 'open' ? 'open' : 'month';
+const pathParts = currentPath.split("/").filter(Boolean);
+const pageMode = pathParts[0] === "open" ? "open" : "month";
 const currentId = pathParts[1];
 const currentMonth = pathParts[2];
 ---
 
-<aside class="w-80 h-screen fixed left-0 top-0 bg-white border-r border-gray-100 hidden md:flex flex-col z-50">
+<aside
+  class="dark w-80 h-screen fixed left-0 top-0 bg-background border-r border-border hidden md:flex flex-col z-50 text-foreground"
+>
   <div class="p-8 pb-6">
     {}
-    <a href="/" class="flex items-center gap-4 hover:opacity-80 transition-opacity">
-      <img src="https://i.ibb.co/Qv4SzXdc/fd6ab2714672b2efc0b4ebb9c4f93eaf-1.webp" class="w-12 h-12 rounded-xl shadow-lg" />
+    <a
+      href="/"
+      class="flex items-center gap-4 hover:opacity-80 transition-opacity"
+    >
+      <img
+        src="https://i.ibb.co/Qv4SzXdc/fd6ab2714672b2efc0b4ebb9c4f93eaf-1.webp"
+        class="w-12 h-12 rounded-xl shadow-lg"
+      />
       <div>
-        <h1 class="font-bold text-base text-gray-900 leading-tight">やまかわてるき鯖</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Analytics Dashboard</p>
+        <h1 class="font-bold text-base text-foreground leading-tight">
+          やまかわてるき鯖
+        </h1>
+        <p class="text-xs text-muted-foreground mt-0.5">Analytics Dashboard</p>
       </div>
     </a>
   </div>
 
-  <SidebarContent 
-    client:load 
+  <SidebarContent
+    client:load
     currentPath={currentPath}
     queryParams={queryParams}
     pageMode={pageMode}
