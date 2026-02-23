@@ -14,6 +14,15 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Tuple
 from pathlib import Path
 from datetime import datetime
+import socket
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("ymkw-api")
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -24,7 +33,9 @@ API_SECRET = os.getenv("API_SECRET", "default_insecure_secret_change_me")
 
 if not raw_dsn:
     BASE_DIR = Path(__file__).resolve().parent
-    ENV_PATH = BASE_DIR.parent / "my_bot" / ".env"
+    ENV_PATH = BASE_DIR.parent / "Bot" / ".env"
+    if not ENV_PATH.exists():
+        ENV_PATH = BASE_DIR.parent / "bot" / ".env"
     load_dotenv(dotenv_path=ENV_PATH)
     raw_dsn = os.getenv("DB_DSN")
     API_SECRET = os.getenv("API_SECRET", "default_insecure_secret_change_me")
@@ -32,7 +43,23 @@ if not raw_dsn:
 if not raw_dsn:
     sys.exit("ERROR: DB_DSN not found.")
 
-DB_DSN = raw_dsn.replace("localhost", "127.0.0.1") if "localhost" in raw_dsn else raw_dsn
+def adjust_db_dsn(dsn: str) -> str:
+    in_container = os.path.exists('/.dockerenv')
+    if not in_container:
+        return dsn.replace("localhost", "127.0.0.1") if "localhost" in dsn else dsn
+    
+    if "localhost" in dsn or "127.0.0.1" in dsn:
+        try:
+            socket.gethostbyname('host.docker.internal')
+            new_dsn = dsn.replace("localhost", "host.docker.internal").replace("127.0.0.1", "host.docker.internal")
+            logger.info("Detected container environment. Using 'host.docker.internal' for database connection.")
+            return new_dsn
+        except socket.gaierror:
+            logger.warning("Running in container but 'host.docker.internal' is not resolvable. Keeping original DSN.")
+            pass
+    return dsn
+
+DB_DSN = adjust_db_dsn(raw_dsn)
 
 app = FastAPI()
 
@@ -43,7 +70,6 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:4321",
 ]
 
-# CORS設定
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -81,10 +107,8 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     
     is_website = is_allowed_origin or is_allowed_referer
 
-    # SSR (Cloudflare Workers等) からのGETリクエストはOrigin/Refererが付かないため許可
     is_ssr_request = request.method == "GET" and not origin and not referer
 
-    # 不正なOriginが明示的に付いている場合はブロック（SSRではなく外部からのアクセス）
     has_wrong_origin = origin and not is_allowed_origin
 
     if not (is_bot or is_website or is_ssr_request):
@@ -116,18 +140,34 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     else:
         cache.set(count_key, (now, 1), expire=RATE_LIMIT_WINDOW)
 
-    return await call_next(request)
+    try:
+        return await call_next(request)
+    except Exception as e:
+        logger.error(f"Unhandled exception during request: {request.method} {request.url.path}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal Server Error", "error_type": type(e).__name__}
+        )
 
 @app.on_event("startup")
 async def startup():
     global pool
-    pool = await asyncpg.create_pool(DB_DSN, ssl=False, command_timeout=60)
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(DB_DSN)
+        safe_dsn = f"{parsed.scheme}://{parsed.username}:****@{parsed.hostname}:{parsed.port}{parsed.path}"
+        logger.info(f"Connecting to database at {safe_dsn}")
+        
+        pool = await asyncpg.create_pool(DB_DSN, ssl=False, command_timeout=60)
+        logger.info("Database connection pool created successfully.")
+    except Exception as e:
+        logger.error(f"Failed to create database pool: {e}")
+        raise e
 
 @app.on_event("shutdown")
 async def shutdown():
     if pool: await pool.close()
 
-# --- Models ---
 class ChannelItem(BaseModel):
     id: str
     name: str
@@ -154,8 +194,6 @@ def format_ranking_response(rows):
     return [{"user_id": str(r["user_id"]), "display_name": r["display_name"] or "Unknown", "username": r["username"] or "unknown", "avatar": r["avatar_url"], "count": r["c"], "char_count": r["chars"] or 0} for r in rows]
 
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
-
-# --- Endpoints ---
 
 @app.get("/")
 @app.get("/api")
@@ -218,7 +256,6 @@ async def search_users(q: str):
     rows = await pool.fetch(query, f"%{search_query}%")
     return [{"user_id": str(r['user_id']), "display_name": r['display_name'], "username": r['username'], "avatar": r['avatar_url']} for r in rows]
 
-# --- Ranking APIs ---
 @app.get("/api/ranking/monthly/{year}/{month}", response_model=List[RankingItem])
 async def get_monthly_ranking(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None)):
     ckey = f"rank_m_{year}_{month}_{channel_id}"
@@ -248,7 +285,6 @@ async def get_total_ranking(response: Response, channel_id: Optional[int] = Quer
     set_cache(ckey, res, ttl=ttl)
     return res
 
-# --- History APIs ---
 @app.get("/api/stats/history/{year}/{month}")
 async def get_daily_history(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[List[str]] = Query(None)):
     ckey = f"hist_m_{year}_{month}_{channel_id}_{user_id}"
@@ -315,7 +351,6 @@ async def get_total_history(response: Response, channel_id: Optional[int] = Quer
     set_cache(ckey, res, ttl=ttl)
     return res
 
-# --- Aggregate APIs ---
 @app.get("/api/stats/heatmap/{year}/{month}")
 async def get_monthly_heatmap(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None)):
     ckey = f"heat_m_{year}_{month}_{channel_id}"
@@ -407,3 +442,39 @@ async def get_total_analysis(response: Response, channel_id: Optional[int] = Que
     res = {"total": count['total'], "max_date": {"date": max_d['d'].strftime("%Y-%m-%d"), "count": max_d['c']} if max_d else None, "max_dow": {"dow": int(max_w['dow']), "count": max_w['c']} if max_w else None, "max_hour": {"hour": int(max_h['h']), "count": max_h['c']} if max_h else None}
     set_cache(ckey, res, ttl=ttl)
     return res
+
+@app.get("/api/debug/db")
+async def debug_db():
+    if not pool:
+        return {"status": "error", "message": "Connection pool not initialized"}
+    try:
+        tables = ["channels", "users", "messages", "snapshots"]
+        counts = {}
+        for t in tables:
+            try:
+                r = await pool.fetchval(f"SELECT count(*) FROM {t}")
+                counts[t] = r
+            except Exception as te:
+                counts[t] = f"Error: {str(te)}"
+        
+        from urllib.parse import urlparse
+        parsed = urlparse(DB_DSN)
+        
+        return {
+            "status": "ok",
+            "host": parsed.hostname,
+            "database": parsed.path.lstrip('/'),
+            "counts": counts,
+            "in_container": os.path.exists('/.dockerenv')
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/debug/clear-cache")
+async def clear_app_cache():
+    cache.clear()
+    return {"status": "cache cleared"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8070)

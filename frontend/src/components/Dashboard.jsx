@@ -37,6 +37,9 @@ export default function Dashboard({ year, month, channelId, userId }) {
 
                 for (const res of responses) {
                     if (res && !res.ok) {
+                        if (res.status === 404) continue;
+
+                        console.error(`API Error: ${res.status} on ${res.url}`);
                         if (res.status === 429 || res.status >= 500) {
                             window.location.href = '/error';
                             return;
@@ -60,7 +63,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
 
                 setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
             } catch (error) {
-                console.error("Dashboard Load Error:", error);
+                console.error("Dashboard Load Error (Network Failure):", error);
                 window.location.href = '/error';
             } finally {
                 setIsLoaded(true);

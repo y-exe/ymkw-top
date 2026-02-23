@@ -56,7 +56,12 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 }
 
                 setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error("SnapshotDashboard Load Error:", err);
+                if (err.message.includes("Fetch failed")) {
+                    window.location.href = '/error';
+                }
+            }
             finally {
                 window.__ymkw_data_ready = true;
                 window.dispatchEvent(new Event('app-loaded'));

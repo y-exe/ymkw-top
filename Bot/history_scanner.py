@@ -4,15 +4,17 @@ import asyncpg
 import datetime
 import os
 import config
+import logging
+import sys
 
-TARGET_CHANNEL_IDS = [
-    1355425464729993367, 1355073969199382530, 1357298745506791574,
-    1450890768255422595, 1373320764945858740, 1356324385983697098,
-    1355497603910865046, 1355552587394449589, 1371391700131647491,
-    1355546326657667150, 1399071027925094617, 1355810985356689547,
-    1360622424579899524, 1356237901645746348, 1406033558757314752,
-    1383029750166982656, 1355570062378930317, 1355546503048859840,
-    1361713489990779172,
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("history-backfill")
+
+EXCLUDE_CHANNEL_IDS = [
 ]
 
 intents = discord.Intents.default()
@@ -22,37 +24,45 @@ intents.guilds = True
 
 client = discord.Client(intents=intents)
 
-@client.event
-async def on_ready():
-    print(f"Logged in as {client.user}")
+async def backfill():
+    logger.info("Starting history backfill process...")
     
+    if not config.DB_DSN:
+        logger.error("DB_DSN is not configured.")
+        return
+
     pool = await asyncpg.create_pool(config.DB_DSN)
     
-    after_date = discord.utils.utcnow() - datetime.timedelta(days=60)
-    print(f"Fetching messages after {after_date}")
+    after_date = discord.utils.utcnow() - datetime.timedelta(days=4)
+    logger.info(f"Fetching messages after {after_date} (Last 4 days)")
     
     guild = client.get_guild(config.GUILD_ID)
     if not guild:
-         print("Error: Guild not found.")
-         await client.close()
+         logger.error(f"Guild not found (ID: {config.GUILD_ID}).")
+         await pool.close()
          return
 
-    total_inserted = 0
+    total_messages = 0
+    total_users = 0
     
-    for channel_id in TARGET_CHANNEL_IDS:
-        channel = guild.get_channel(channel_id)
-        if not channel:
-            print(f"Channel {channel_id} not found, skipping.")
+    channels = [c for c in guild.text_channels if c.id not in EXCLUDE_CHANNEL_IDS]
+    logger.info(f"Found {len(channels)} channels to scan.")
+
+    for i, channel in enumerate(channels):
+        perms = channel.permissions_for(guild.me)
+        if not perms.read_message_history or not perms.read_messages:
+            logger.warning(f"[{i+1}/{len(channels)}] Skipping {channel.name}: Missing permissions.")
             continue
             
-        print(f"Scanning channel: {channel.name}...")
+        logger.info(f"[{i+1}/{len(channels)}] Scanning channel: {channel.name}...")
         
-        messages_data = []
+        batch_messages = []
         user_data = {}
+        channel_count = 0
         
         try:
-            async for msg in channel.history(limit=None, after=after_date):
-                messages_data.append((
+            async for msg in channel.history(limit=None, after=after_date, oldest_first=True):
+                batch_messages.append((
                     msg.id,
                     msg.author.id,
                     msg.channel.id,
@@ -70,35 +80,69 @@ async def on_ready():
                         msg.author.name,
                         avatar
                     )
-                    
-            if not messages_data:
-                continue
                 
-            if user_data:
-                await pool.executemany('''
+                if len(batch_messages) % 100 == 0:
+                    await asyncio.sleep(0.8)
+
+                if len(batch_messages) >= 500:
+                    await save_to_db(pool, batch_messages, user_data)
+                    channel_count += len(batch_messages)
+                    batch_messages = []
+                    user_data = {}
+                    await asyncio.sleep(1.5)
+
+            if batch_messages or user_data:
+                await save_to_db(pool, batch_messages, user_data)
+                channel_count += len(batch_messages)
+            
+            logger.info(f"Finished {channel.name}: Processed {channel_count} messages.")
+            total_messages += channel_count
+            
+            await asyncio.sleep(2.0)
+            
+        except discord.Forbidden:
+            logger.error(f"Forbidden error in {channel.name}. Skipping.")
+        except Exception as e:
+            logger.error(f"Error scanning {channel.name}: {e}")
+            
+    logger.info(f"==========\nBackfill complete! Total processed: {total_messages} messages.")
+    await pool.close()
+
+async def save_to_db(pool, messages, users):
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            if users:
+                await conn.executemany('''
                     INSERT INTO users (user_id, display_name, username, avatar_url)
                     VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (user_id) DO NOTHING
-                ''', list(user_data.values()))
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        display_name = EXCLUDED.display_name,
+                        username = EXCLUDED.username,
+                        avatar_url = EXCLUDED.avatar_url
+                ''', list(users.values()))
             
-            await pool.executemany('''
-                INSERT INTO messages (message_id, user_id, channel_id, guild_id, created_at, is_bot, char_count)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                ON CONFLICT (message_id) DO NOTHING
-            ''', messages_data)
-            
-            print(f"Inserted/Verified {len(messages_data)} messages for {channel.name}.")
-            total_inserted += len(messages_data)
-            
-        except Exception as e:
-            print(f"Error scanning {channel.name}: {e}")
-            
-    print(f"==========\nDone! Scanned and processed {total_inserted} messages.")
-    await pool.close()
-    await client.close()
+            if messages:
+                await conn.executemany('''
+                    INSERT INTO messages (message_id, user_id, channel_id, guild_id, created_at, is_bot, char_count)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    ON CONFLICT (message_id) DO UPDATE SET
+                        char_count = EXCLUDED.char_count
+                ''', messages)
+
+@client.event
+async def on_ready():
+    logger.info(f"Logged in as {client.user}")
+    try:
+        await backfill()
+    finally:
+        logger.info("Closing client...")
+        await client.close()
 
 if __name__ == "__main__":
     if not config.TOKEN:
-        print("Missing token!")
+        logger.error("DISCORD_TOKEN is missing in .env")
     else:
-        client.run(config.TOKEN)
+        try:
+            client.run(config.TOKEN)
+        except Exception as e:
+            logger.error(f"Bot execution error: {e}")

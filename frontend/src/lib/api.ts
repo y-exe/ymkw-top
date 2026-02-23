@@ -15,7 +15,7 @@ export async function fetchAPI(
     path: string,
     options: FetchAPIOptions = {}
 ): Promise<Response> {
-    const { timeout = 8000, retries = 2, ...fetchOptions } = options;
+    const { retries = 2, ...fetchOptions } = options;
 
     const url = path.startsWith("http") ? path : `${API_URL}${path}`;
 
@@ -29,16 +29,11 @@ export async function fetchAPI(
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
         try {
             const res = await fetch(url, {
                 ...fetchOptions,
                 headers,
-                signal: controller.signal,
             });
-            clearTimeout(timeoutId);
 
             // 成功 or 404 はそのまま返す（リトライ不要）
             if (res.ok || res.status === 404) return res;
@@ -55,7 +50,6 @@ export async function fetchAPI(
             // その他のエラー（403等）はリトライせずそのまま返す
             return res;
         } catch (err) {
-            clearTimeout(timeoutId);
             lastError = err as Error;
             if (attempt < retries) {
                 await delay(1000 * Math.pow(2, attempt));

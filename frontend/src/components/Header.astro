@@ -43,7 +43,6 @@ const month = parts[2];
 <header
   class="h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border hidden md:flex items-center justify-between px-8 sticky top-0 z-40"
 >
-  <!-- 左側のナビゲーション -->
   <Breadcrumb>
     <BreadcrumbList>
       <BreadcrumbItem>
@@ -79,15 +78,11 @@ const month = parts[2];
     </BreadcrumbList>
   </Breadcrumb>
 
-  <!-- 右側: [ダークモード切替] | [GitHub] | [ログイン等] -->
   <div class="flex items-center gap-3">
-    <!-- ダークモード切替 -->
     <ToggleTheme client:load />
 
-    <!-- セパレーター -->
     <div class="h-5 w-px bg-border"></div>
 
-    <!-- GitHub リンク -->
     <a
       href="https://github.com/y-exe/ymkw-top"
       target="_blank"
@@ -102,10 +97,8 @@ const month = parts[2];
       </svg>
     </a>
 
-    <!-- セパレーター -->
     <div class="h-5 w-px bg-border"></div>
 
-    <!-- ログイン/ログアウト -->
     {
       userId && userId !== "guest" ? (
         <>

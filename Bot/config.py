@@ -1,11 +1,29 @@
 import os
+import socket
 from dotenv import load_dotenv
 
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 raw_dsn = os.getenv("DB_DSN")
-DB_DSN = raw_dsn.replace("127.0.0.1", "postgres-db").replace("localhost", "postgres-db") if raw_dsn else None
+
+def adjust_db_dsn(dsn: str) -> str:
+    if not dsn:
+        return None
+    
+    in_container = os.path.exists('/.dockerenv')
+    if not in_container:
+        return dsn.replace("localhost", "127.0.0.1") if "localhost" in dsn else dsn
+    
+    if "localhost" in dsn or "127.0.0.1" in dsn or "postgres-db" in dsn:
+        try:
+            socket.gethostbyname('host.docker.internal')
+            return dsn.replace("localhost", "host.docker.internal").replace("127.0.0.1", "host.docker.internal").replace("postgres-db", "host.docker.internal")
+        except socket.gaierror:
+            return dsn.replace("127.0.0.1", "postgres-db").replace("localhost", "postgres-db")
+    return dsn
+
+DB_DSN = adjust_db_dsn(raw_dsn)
 
 GUILD_ID = int(os.getenv("GUILD_ID", 0))
 OWNER_ID = int(os.getenv("OWNER_ID", 0))
