@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { Check, LogOut, X } from "lucide-react";
+import { Check, LogIn, LogOut, X } from "lucide-react";
 import { useState } from "react";
 
 const smoothSpring = {
@@ -125,7 +125,7 @@ export function LoginButton({ className = "" }) {
                     className="h-9 text-xs px-5 inline-flex items-center justify-center rounded-xl font-bold bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all cursor-pointer active:scale-95"
                     onClick={handleLogin}
                 >
-                    <LogOut className="h-3.5 w-3.5 mr-2 rotate-180" />
+                    <LogIn className="h-3.5 w-3.5 mr-2" />
                     Login
                 </button>
             </motion.div>

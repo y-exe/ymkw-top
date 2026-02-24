@@ -70,15 +70,6 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:4321",
 ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex="https://.*\.pages\.dev",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 pool = None
 cache_dir = os.path.join(tempfile.gettempdir(), "ymkw_api_diskcache_v10")
 cache = diskcache.Cache(cache_dir)
@@ -89,37 +80,61 @@ def get_cache(key: str):
 def set_cache(key: str, data: Any, ttl: int = 600):
     cache.set(key, data, expire=ttl)
 
+def get_cors_origin(request: Request) -> Optional[str]:
+    origin = request.headers.get("origin")
+    if not origin:
+        return None
+    clean_origin = origin.rstrip('/')
+    if clean_origin in ALLOWED_ORIGINS or ".pages.dev" in clean_origin:
+        return origin
+    return None
+
+def cors_json_response(request: Request, status_code: int, content: dict, block_reason: Optional[str] = None):
+    response = JSONResponse(status_code=status_code, content=content)
+    origin = get_cors_origin(request)
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-API-KEY, X-Requested-With, Accept, Origin, Referer"
+    
+    response.headers["Vary"] = "Origin"
+    
+    if block_reason:
+        response.headers["X-Debug-Block"] = block_reason
+    return response
+
 RATE_LIMIT_WINDOW = 10
 MAX_REQUESTS = 150
 BLOCK_DURATION = 600
 
 @app.middleware("http")
 async def security_and_rate_limit_middleware(request: Request, call_next):
-    
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     client_api_key = request.headers.get("X-API-KEY")
     is_bot = client_api_key == API_SECRET
 
     origin = request.headers.get("origin")
     referer = request.headers.get("referer")
     
-    is_allowed_origin = origin and (origin in ALLOWED_ORIGINS or ".pages.dev" in origin)
+    clean_origin = origin.rstrip('/') if origin else None
+    is_allowed_origin = clean_origin and (clean_origin in ALLOWED_ORIGINS or ".pages.dev" in clean_origin)
     is_allowed_referer = referer and (any(d in referer for d in ALLOWED_ORIGINS) or ".pages.dev" in referer)
     
     is_website = is_allowed_origin or is_allowed_referer
-
     is_ssr_request = request.method == "GET" and not origin and not referer
 
-    has_wrong_origin = origin and not is_allowed_origin
-
     if not (is_bot or is_website or is_ssr_request):
-        if has_wrong_origin or request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
-            return JSONResponse(status_code=403, content={"detail": "Access Denied: Direct access is not allowed."})
+        if (origin and not is_allowed_origin) or request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
+            return cors_json_response(request, status_code=403, content={"detail": "Access Denied: Origin/Referer not allowed."}, block_reason="security-policy")
 
     client_ip = request.headers.get("CF-Connecting-IP") or request.client.host
     
     block_key = f"blocked:{client_ip}"
     if cache.get(block_key):
-        return JSONResponse(status_code=429, content={"detail": "Too Many Requests. Blocked for 2 hours."})
+        return cors_json_response(request, status_code=429, content={"detail": "Too Many Requests. Blocked for 10 minutes."}, block_reason="rate-limit-active")
 
     count_key = f"rate_limit:{client_ip}"
     current_data = cache.get(count_key)
@@ -131,7 +146,7 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
             new_count = count + 1
             if new_count > MAX_REQUESTS:
                 cache.set(block_key, True, expire=BLOCK_DURATION)
-                return JSONResponse(status_code=429, content={"detail": "Too Many Requests. Blocked for 2 hours."})
+                return cors_json_response(request, status_code=429, content={"detail": "Too Many Requests. Blocked for 10 minutes."}, block_reason="rate-limit-exceeded")
             else:
                 ttl = max(1, RATE_LIMIT_WINDOW - (now - first_req_time))
                 cache.set(count_key, (first_req_time, new_count), expire=ttl)
@@ -141,13 +156,12 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
         cache.set(count_key, (now, 1), expire=RATE_LIMIT_WINDOW)
 
     try:
-        return await call_next(request)
+        response = await call_next(request)
+        response.headers["Vary"] = "Origin"
+        return response
     except Exception as e:
         logger.error(f"Unhandled exception during request: {request.method} {request.url.path}", exc_info=True)
-        return JSONResponse(
-            status_code=500,
-            content={"detail": "Internal Server Error", "error_type": type(e).__name__}
-        )
+        return cors_json_response(request, status_code=500, content={"detail": "Internal Server Error", "error_type": type(e).__name__}, block_reason="internal-error")
 
 @app.on_event("startup")
 async def startup():
@@ -158,8 +172,8 @@ async def startup():
         safe_dsn = f"{parsed.scheme}://{parsed.username}:****@{parsed.hostname}:{parsed.port}{parsed.path}"
         logger.info(f"Connecting to database at {safe_dsn}")
         
-        pool = await asyncpg.create_pool(DB_DSN, ssl=False, command_timeout=60)
-        logger.info("Database connection pool created successfully.")
+        pool = await asyncpg.create_pool(DB_DSN, min_size=10, max_size=50, ssl=False, command_timeout=60)
+        logger.info("Database connection pool created (size: 10-50).")
     except Exception as e:
         logger.error(f"Failed to create database pool: {e}")
         raise e
@@ -474,6 +488,16 @@ async def debug_db():
 async def clear_app_cache():
     cache.clear()
     return {"status": "cache cleared"}
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.pages\.dev",
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-KEY", "X-Requested-With", "Accept", "Origin", "Referer"],
+    expose_headers=["X-Debug-Block"],
+)
 
 if __name__ == "__main__":
     import uvicorn

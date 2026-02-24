@@ -67,13 +67,12 @@ export default function LoginModal() {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in">
-                <div className="p-6 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-900">ようこそ！</h2>
-                    <p className="text-sm text-gray-500 mt-1">あなたのアカウントを選択してください</p>
+            <div className="bg-card text-card-foreground rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border border-border">
+                <div className="p-6 border-b border-border">
+                    <h2 className="text-xl font-bold text-foreground">ようこそ！</h2>
+                    <p className="text-sm text-muted-foreground mt-1">あなたのアカウントを選択してください</p>
 
-                    {/* 追加：ログインのメリットを表示 */}
-                    <div className="mt-3 flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+                    <div className="mt-3 flex items-center gap-2 text-xs font-bold text-blue-500 bg-blue-500/10 px-3 py-2 rounded-lg">
                         <span className="text-base">📊</span>
                         <span>ログインすることで個人分析などを見ることができます</span>
                     </div>
@@ -81,45 +80,45 @@ export default function LoginModal() {
 
                 <div className="p-4">
                     <div className="relative mb-4">
-                        <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                        <Search className="absolute left-3 top-2.5 w-5 h-5 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="ユーザー名で検索..."
-                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2 bg-muted border border-input rounded-xl focus:ring-2 focus:ring-primary focus:outline-none transition-all placeholder:text-muted-foreground"
                             value={query}
                             onChange={handleSearch}
                         />
                     </div>
 
                     <div className="h-64 overflow-y-auto custom-scrollbar space-y-2">
-                        {loading && <p className="text-center text-sm text-gray-400">検索中...</p>}
+                        {loading && <p className="text-center text-sm text-muted-foreground">検索中...</p>}
 
                         {!loading && results.map(user => (
                             <button
                                 key={user.user_id}
                                 onClick={() => handleLogin(user)}
-                                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors text-left"
+                                className="w-full flex items-center gap-3 p-3 hover:bg-muted rounded-xl transition-colors text-left"
                             >
                                 {user.avatar ? (
-                                    <img src={user.avatar} className="w-10 h-10 rounded-full border border-gray-200" />
+                                    <img src={user.avatar} className="w-10 h-10 rounded-full border border-border" />
                                 ) : (
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center"><User className="w-5 h-5 text-gray-500" /></div>
+                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"><User className="w-5 h-5 text-muted-foreground" /></div>
                                 )}
                                 <div>
-                                    <p className="font-bold text-gray-900 text-sm">{user.display_name}</p>
-                                    <p className="text-xs text-gray-400">@{user.username}</p>
+                                    <p className="font-bold text-foreground text-sm">{user.display_name}</p>
+                                    <p className="text-xs text-muted-foreground">@{user.username}</p>
                                 </div>
                             </button>
                         ))}
 
                         {!loading && results.length === 0 && query && (
-                            <p className="text-center text-gray-400 text-sm py-4">ユーザーが見つかりません。<br />(Botの同期が完了していない可能性があります)</p>
+                            <p className="text-center text-muted-foreground text-sm py-4">ユーザーが見つかりません。<br />(Botの同期が完了していない可能性があります)</p>
                         )}
                     </div>
                 </div>
 
-                <div className="p-4 bg-gray-50 text-center">
-                    <button onClick={handleSkip} className="text-sm text-gray-500 hover:text-black underline">
+                <div className="p-4 bg-muted/50 text-center border-t border-border">
+                    <button onClick={handleSkip} className="text-sm text-muted-foreground hover:text-foreground underline transition-colors">
                         ログインせずに閲覧する
                     </button>
                 </div>

@@ -9,55 +9,104 @@ export default function ActivityHeatmap({ data }) {
   const dataMap = {};
   let maxCount = 0;
 
+  const sortedData = [...data].sort((a, b) => b.count - a.count);
+  const top5Threshold = sortedData.length >= 5 ? sortedData[4].count : (sortedData.length > 0 ? sortedData[sortedData.length - 1].count : 0);
+  const top5Entries = sortedData.slice(0, 5).map(d => `${d.dow}-${d.hour}`);
+
   data.forEach(d => {
     if (!dataMap[d.dow]) dataMap[d.dow] = {};
     dataMap[d.dow][d.hour] = d.count;
     if (d.count > maxCount) maxCount = d.count;
   });
 
-  const getOpacity = (count) => {
-    if (!count) return 0.05;
-    return Math.max(0.1, Math.min(1, Math.log(count + 1) / Math.log(maxCount + 1)));
+  const getStyle = (count, dow, hour) => {
+    if (count === 0) {
+      return { backgroundColor: 'transparent', border: '1px solid var(--border)', opacity: 0.3 };
+    }
+
+    const isTop5 = top5Entries.includes(`${dow}-${hour}`);
+    if (isTop5) {
+      return {
+        backgroundColor: 'rgba(239, 68, 68, 1)',
+        boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
+      };
+    }
+
+    const intensity = Math.max(0.15, Math.min(1, Math.log(count + 1) / Math.log(maxCount + 1)));
+
+    return {
+      backgroundColor: `rgba(var(--heatmap-color, 0, 0, 0), ${intensity})`
+    };
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-      <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-        Activity Heatmap
-        <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">UTC/JST (Server Time)</span>
-      </h3>
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm text-slate-900 dark:text-slate-100 [--heatmap-color:0,0,0] dark:[--heatmap-color:255,255,255]">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+          Activity Heatmap
+        </h3>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Top 5 Peaks</span>
+          </div>
+          <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded tracking-widest">JST</span>
+        </div>
+      </div>
 
-      <div className="overflow-x-auto custom-scrollbar pb-2">
-        <div className="min-w-[600px]">
-          {/* Header (Hours) */}
-          <div className="flex mb-1">
+      <div className="overflow-x-auto custom-scrollbar pb-2 pt-4">
+        <div className="min-w-[600px] px-2">
+          <div className="flex mb-2">
             <div className="w-8"></div>
             {hours.map(h => (
-              <div key={h} className="flex-1 text-[10px] text-muted-foreground text-center font-mono">
-                {h % 3 === 0 ? h : ''}
+              <div key={h} className="flex-1 text-[9px] font-black text-muted-foreground/50 text-center font-mono">
+                {h % 2 === 0 ? h : ''}
               </div>
             ))}
           </div>
 
-          {/* Grid */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-[4px]">
             {days.map((day, dowIndex) => (
-              <div key={day} className="flex items-center gap-1">
-                <span className="w-8 text-[10px] font-bold text-muted-foreground uppercase">{day}</span>
+              <div key={day} className="flex items-center gap-[4px]">
+                <span className="w-8 text-[9px] font-black text-muted-foreground uppercase tracking-tighter">{day}</span>
                 {hours.map(hour => {
                   const count = dataMap[dowIndex]?.[hour] || 0;
-                  const opacity = getOpacity(count);
+                  const style = getStyle(count, dowIndex, hour);
+                  const isTop5 = top5Entries.includes(`${dowIndex}-${hour}`);
+
+                  const isFirstRow = dowIndex < 3;
+                  const isLeftEdge = hour < 2;
+                  const isRightEdge = hour > 21;
 
                   return (
                     <div
                       key={hour}
-                      className="flex-1 aspect-square rounded-sm transition-all hover:ring-2 hover:ring-primary relative group"
-                      style={{
-                        backgroundColor: `rgba(37, 99, 235, ${opacity})`
-                      }}
+                      className="flex-1 aspect-square rounded-[4px] transition-all hover:scale-125 hover:z-10 relative group cursor-crosshair border border-black/5 dark:border-white/5"
+                      style={style}
                     >
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-popover text-popover-foreground text-xs rounded whitespace-nowrap pointer-events-none z-10 border border-border shadow-md">
-                        {day} {hour}:00 - <strong>{count}</strong> msg
+                      <div className={`
+                        invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 
+                        absolute pointer-events-none z-[100]
+                        ${isFirstRow ? 'top-full mt-3' : 'bottom-full mb-3'}
+                        ${isLeftEdge ? 'left-0 translate-x-0' : isRightEdge ? 'right-0 translate-x-0' : 'left-1/2 -translate-x-1/2'}
+                      `}>
+                        <div className={`${isTop5 ? 'bg-red-600 shadow-red-500/30' : 'bg-slate-900 shadow-slate-900/40'} text-white p-3 rounded-xl shadow-2xl border border-white/20 min-w-[120px] backdrop-blur-md opacity-100`}>
+                          <div className={`text-[10px] ${isTop5 ? 'text-white/70' : 'text-slate-400'} font-black uppercase tracking-widest mb-1.5 border-b border-white/10 pb-1 flex justify-between items-center gap-4`}>
+                            <span>{day}</span>
+                            <span>{hour}:00</span>
+                          </div>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-sm font-black text-white">{count.toLocaleString()}</span>
+                            <span className={`text-[10px] ${isTop5 ? 'text-white/70' : 'text-slate-400'} font-bold uppercase tracking-tight`}>messages</span>
+                          </div>
+
+                          <div className={`
+                            absolute left-1/2 -translate-x-1/2 border-8 border-transparent
+                            ${isFirstRow ? 'bottom-full border-b-current rotate-0 -mb-1' : 'top-full border-t-current rotate-0 -mt-1'}
+                            ${isTop5 ? 'text-red-600' : 'text-slate-900'}
+                            ${isLeftEdge ? 'left-4' : isRightEdge ? 'left-auto right-4 translate-x-0' : ''}
+                          `}></div>
+                        </div>
                       </div>
                     </div>
                   );

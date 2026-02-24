@@ -5,9 +5,12 @@ import StatsCard from './StatsCard';
 import TrendChart from './charts/TrendChart';
 import ActivityHeatmap from './charts/ActivityHeatmap';
 import ChannelPieChart from './charts/ChannelPieChart';
+import ChannelStatsCard from './charts/ChannelStatsCard';
+import GrowthComparison from './charts/GrowthComparison';
 import RankingList from './RankingList';
 import MouseEffectCard from './MouseEffectCard';
 import { fetchAPI } from '@/lib/api';
+import { Card } from "@/components/ui/card";
 
 export default function Dashboard({ year, month, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -21,6 +24,10 @@ export default function Dashboard({ year, month, channelId, userId }) {
             const params = new URLSearchParams();
             if (channelId) params.append('channel_id', channelId);
 
+            const prevDate = new Date(year, month - 2, 1);
+            const prevYear = prevDate.getFullYear();
+            const prevMonth = prevDate.getMonth() + 1;
+
             const histParams = new URLSearchParams(params);
             const targetId = focusedUserId || (userId !== 'guest' ? userId : null);
             if (targetId) histParams.set('user_id', targetId);
@@ -31,15 +38,17 @@ export default function Dashboard({ year, month, channelId, userId }) {
                     fetchAPI(`/api/stats/history/${year}/${month}?${histParams.toString()}`),
                     fetchAPI(`/api/stats/heatmap/${year}/${month}?${params.toString()}`),
                     fetchAPI(`/api/stats/analysis/${year}/${month}?${params.toString()}`),
+                    fetchAPI(`/api/stats/analysis/${prevYear}/${prevMonth}?${params.toString()}`),
                     userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/${year}/${month}?${params.toString()}&user_id=${userId}`) : Promise.resolve(null),
                     !channelId ? fetchAPI(`/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
                 ]);
 
-                const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = responses;
+                const [rankRes, trendRes, heatmapRes, overallRes, prevOverallRes, personalRes, pieRes] = responses;
                 const ranking = await rankRes.json();
                 const trend = await trendRes.json();
                 const heatmap = await heatmapRes.json();
                 const overall = await overallRes.json();
+                const prevOverall = await prevOverallRes.json();
                 const personal = (personalRes && personalRes.ok) ? await personalRes.json() : null;
                 const pie = (pieRes && pieRes.ok) ? await pieRes.json() : [];
 
@@ -49,7 +58,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
                     if (idx !== -1) myData = { ...ranking[idx], rank: idx + 1 };
                 }
 
-                setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
+                setData({ ranking, trend, heatmap, pie, overall, prevOverall, personal, myData, topUserCount: ranking[0]?.count || 0 });
             } catch (error) {
                 console.error("Dashboard Load Error:", error);
                 const code = error.status || (error.name === 'TypeError' ? 'NetworkError' : 'unknown');
@@ -69,27 +78,48 @@ export default function Dashboard({ year, month, channelId, userId }) {
 
     return (
         <MouseEffectCard className="min-h-screen">
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
                 <PageHeader title={`${year}.${month}`} subTitle="Monthly Report" />
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <div className="lg:col-span-3 flex flex-col gap-6 min-w-0">
+
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex-1 min-w-0 space-y-6">
                         <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
+
                         {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
-                        <TrendChart
-                            key={`trend-${focusedUserId}`}
-                            apiData={data.trend}
-                            highlightUserId={userId}
-                            focusedUserId={focusedUserId}
-                            onSearchUser={(id) => setFocusedUserId(id)}
-                        />
+
+                        <div className="w-full overflow-hidden">
+                            <TrendChart
+                                key={`trend-${focusedUserId}`}
+                                apiData={data.trend}
+                                highlightUserId={userId}
+                                focusedUserId={focusedUserId}
+                                onSearchUser={(id) => setFocusedUserId(id)}
+                            />
+                        </div>
+
                         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            <div className="xl:col-span-2 min-w-0"><ActivityHeatmap data={data.heatmap} /></div>
-                            <div className="xl:col-span-1 h-full min-h-[300px]">
-                                {!channelId ? <ChannelPieChart data={data.pie} /> : <div className="bg-card border border-border rounded-xl p-6 h-full flex items-center justify-center text-muted-foreground text-xs font-bold uppercase tracking-widest text-center shadow-sm">AI Insights & Top Topics<br />Coming Soon</div>}
+                            <div className="xl:col-span-2 w-full min-w-0">
+                                <ActivityHeatmap data={data.heatmap} />
+                            </div>
+                            <div className="xl:col-span-1 w-full min-w-0">
+                                <div className="h-full">
+                                    {!channelId ? (
+                                        <ChannelPieChart data={data.pie} />
+                                    ) : (
+                                        <ChannelStatsCard
+                                            ranking={data.ranking}
+                                            overall={data.overall}
+                                            prevOverall={data.prevOverall}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
+
+                        <GrowthComparison current={data.overall} previous={data.prevOverall} />
                     </div>
-                    <div className="lg:col-span-1 min-w-0">
+
+                    <div className="w-full lg:w-[320px] xl:w-[380px] flex-shrink-0">
                         <div className="sticky top-20">
                             <RankingList data={data.ranking} highlightUserId={userId} />
                         </div>

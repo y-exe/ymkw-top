@@ -40,12 +40,10 @@ export default function FooterSection({
     return (
         <footer className="bg-background py-16 border-t border-border">
             <div className="container mx-auto px-6 max-w-7xl">
-                {/* --- Branding & Status --- */}
                 <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-10">
-                    {/* Logo + tagline */}
                     <div className="max-w-sm text-center lg:text-left">
                         <img
-                            src="https://i.ibb.co/Qv4SzXdc/fd6ab2714672b2efc0b4ebb9c4f93eaf-1.webp"
+                            src="/ymkw.webp"
                             alt="ymkw.top logo"
                             title="ymkw.top"
                             width={100}
@@ -62,7 +60,6 @@ export default function FooterSection({
                         </div>
                     </div>
 
-                    {/* --- Menu Links (multi-column) --- */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-8 flex-1 lg:ml-20">
                         {menuItems.map((section, sectionIdx) => (
                             <div key={sectionIdx}>
@@ -84,7 +81,6 @@ export default function FooterSection({
                     </div>
                 </div>
 
-                {/* --- Bottom Bar --- */}
                 <div className="border-t border-border mt-12 pt-6 flex flex-col md:flex-row justify-between items-center text-xs text-muted-foreground gap-4">
                     <p>{copyright}</p>
                     <ul className="flex flex-wrap gap-4">

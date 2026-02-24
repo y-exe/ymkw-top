@@ -8,6 +8,7 @@ import ChannelPieChart from './charts/ChannelPieChart';
 import RankingList from './RankingList';
 import MouseEffectCard from './MouseEffectCard';
 import { fetchAPI } from '@/lib/api';
+import { Card } from "@/components/ui/card";
 
 export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -75,33 +76,47 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
 
     return (
         <MouseEffectCard className="min-h-screen">
-            <div className="animate-fade-in">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
                 <PageHeader
                     title={snapshotInfo.title}
                     subTitle="History Snapshot"
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <div className="lg:col-span-3 flex flex-col gap-6 min-w-0">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex-1 min-w-0 space-y-6">
                         <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
+
                         {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
 
-                        <TrendChart
-                            key={`trend-${focusedUserId}`}
-                            apiData={data.trend}
-                            highlightUserId={userId}
-                            focusedUserId={focusedUserId}
-                            onSearchUser={(id) => setFocusedUserId(id)}
-                        />
+                        <div className="w-full overflow-hidden">
+                            <TrendChart
+                                key={`trend-${focusedUserId}`}
+                                apiData={data.trend}
+                                highlightUserId={userId}
+                                focusedUserId={focusedUserId}
+                                onSearchUser={(id) => setFocusedUserId(id)}
+                            />
+                        </div>
 
                         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            <div className="xl:col-span-2 min-w-0"><ActivityHeatmap data={data.heatmap} /></div>
-                            <div className="xl:col-span-1 h-full min-h-[300px]">
-                                {!channelId ? <ChannelPieChart data={data.pie} /> : <div className="bg-card border border-border rounded-xl p-6 h-full flex items-center justify-center text-muted-foreground text-xs font-bold uppercase tracking-widest text-center shadow-sm">AI Summary Coming Soon</div>}
+                            <div className="xl:col-span-2 w-full min-w-0">
+                                <ActivityHeatmap data={data.heatmap} />
+                            </div>
+                            <div className="xl:col-span-1 w-full min-w-0">
+                                {!channelId ? (
+                                    <ChannelPieChart data={data.pie} />
+                                ) : (
+                                    <Card className="h-full min-h-[300px] flex items-center justify-center p-6">
+                                        <div className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-center">
+                                            AI Summary Coming Soon
+                                        </div>
+                                    </Card>
+                                )}
                             </div>
                         </div>
                     </div>
-                    <div className="lg:col-span-1 min-w-0">
+
+                    <div className="w-full lg:w-[320px] xl:w-[380px] flex-shrink-0">
                         <div className="sticky top-20">
                             <RankingList data={data.ranking} highlightUserId={userId} />
                         </div>

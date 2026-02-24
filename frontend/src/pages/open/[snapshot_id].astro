@@ -8,8 +8,7 @@ const url = Astro.url;
 if (snapshot_id === "total") return Astro.redirect("/");
 
 const channelId = url.searchParams.get("channel");
-let userId =
-  url.searchParams.get("user") || Astro.cookies.get("user_id")?.value;
+let userId = Astro.cookies.get("user_id")?.value;
 if (userId === "guest") userId = null;
 
 Astro.response.headers.set(
