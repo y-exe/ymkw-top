@@ -112,4 +112,4 @@ npm run build
 
 MIT License
 
-Copyright (c) 2025 ymkw.top
+Copyright (c) 2026 ymkw.top

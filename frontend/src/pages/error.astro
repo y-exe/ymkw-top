@@ -1,5 +1,5 @@
 ---
-import { render } from "cloudflare-error-page";
+import { getCloudflareErrorHtml } from "../utils/cf-error.js";
 
 const { url } = Astro;
 const errorCode = url.searchParams.get("code") || "502";
@@ -13,23 +13,13 @@ const endpointHtml = errorUrl
   ? "<div><strong>Endpoint:</strong> " + errorUrl + "</div>"
   : "";
 
-const html = render({
+const html = getCloudflareErrorHtml({
   title: errorMsg,
-  error_code: parseInt(errorCode, 10),
-  html_title: `${errorCode}: ${errorMsg}`,
-  browser_status: { status: "ok", name: "Browser", location: "You" },
-  cloudflare_status: {
-    status: isOriginIssue ? "error" : "ok",
-    name: "Network",
-    location: url.host || "Gateway",
-  },
-  host_status: {
-    status: isOriginIssue ? "ok" : "error",
-    name: "API",
-    location: "Backend Server",
-  },
-  error_source: isOriginIssue ? "cloudflare" : "host",
-  what_happened:
+  errorCode: parseInt(errorCode, 10),
+  htmlTitle: `${errorCode}: ${errorMsg}`,
+  isOriginIssue: isOriginIssue,
+  cfLocation: url.host || "Gateway",
+  whatHappened:
     '<p style="margin-bottom: 16px; line-height: 1.6;">APIサーバーへの接続に失敗しました。<br/>サーバーが混み合っているか、アクセス制限がかかっている<br/>可能性があります。</p>' +
     '<div style="font-size: 0.85em; opacity: 0.8; padding: 16px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 6px; font-family: monospace; line-height: 1.6; word-break: break-all;">' +
     '<div style="font-weight: 700; margin-bottom: 8px; font-size: 1.1em; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">Debug Information</div>' +
@@ -44,15 +34,13 @@ const html = render({
     currentOrigin +
     "</div>" +
     "</div>",
-  what_can_i_do:
+  whatCanIDo:
     '<p style="margin-bottom: 24px; line-height: 1.6;">' +
     "しばらくしてもこのエラーが治らない場合は<br/>" +
     "Discordサーバーのチケットや要望、y_xyzのDMよりご連絡ください。<br/><br/>" +
     "エラー等が治ったら際、再読み込みではなくいったんトップページ戻らないと<br/>修正が反映されない恐れがありますのでご注意ください" +
     "</p>" +
     '<div><a href="/" style="display:inline-block; padding: 12px 24px; background: #0051c3; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">トップページに戻る</a></div>',
-  perf_sec_by: { text: "ymkw-top", link: "/" },
-  more_information: { hidden: true },
 });
 ---
 
