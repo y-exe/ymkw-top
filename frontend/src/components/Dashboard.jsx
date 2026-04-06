@@ -33,13 +33,16 @@ export default function Dashboard({ year, month, channelId, userId }) {
             if (targetId) histParams.set('user_id', targetId);
 
             try {
+                const paramsStr = params.toString();
+                const histParamsStr = histParams.toString();
+
                 const responses = await Promise.all([
-                    fetchAPI(`/api/ranking/monthly/${year}/${month}?${params.toString()}`),
-                    fetchAPI(`/api/stats/history/${year}/${month}?${histParams.toString()}`),
-                    fetchAPI(`/api/stats/heatmap/${year}/${month}?${params.toString()}`),
-                    fetchAPI(`/api/stats/analysis/${year}/${month}?${params.toString()}`),
-                    fetchAPI(`/api/stats/analysis/${prevYear}/${prevMonth}?${params.toString()}`),
-                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/${year}/${month}?${params.toString()}&user_id=${userId}`) : Promise.resolve(null),
+                    fetchAPI(`/api/ranking/monthly/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/api/stats/history/${year}/${month}${histParamsStr ? `?${histParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/heatmap/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/api/stats/analysis/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/api/stats/analysis/${prevYear}/${prevMonth}${paramsStr ? `?${paramsStr}` : ''}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/${year}/${month}?${paramsStr}${paramsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
                     !channelId ? fetchAPI(`/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
                 ]);
 

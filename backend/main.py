@@ -70,6 +70,14 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:4321",
 ]
 
+# ドメイン名のみのリスト
+ALLOWED_DOMAINS = [
+    "ymkw.top",
+    "www.ymkw.top",
+    "localhost",
+    "127.0.0.1"
+]
+
 pool = None
 cache_dir = os.path.join(tempfile.gettempdir(), "ymkw_api_diskcache_v10")
 cache = diskcache.Cache(cache_dir)
@@ -80,26 +88,57 @@ def get_cache(key: str):
 def set_cache(key: str, data: Any, ttl: int = 600):
     cache.set(key, data, expire=ttl)
 
+def is_domain_allowed(domain: Optional[str]) -> bool:
+    if not domain:
+        return False
+    return domain in ALLOWED_DOMAINS or domain.endswith(".ymkw.top") or domain.endswith(".pages.dev")
+
 def get_cors_origin(request: Request) -> Optional[str]:
     origin = request.headers.get("origin")
     if not origin:
+        # Originがない場合はRefererから推測を試みる
+        referer = request.headers.get("referer")
+        if referer:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(referer)
+                clean_ref = f"{parsed.scheme}://{parsed.hostname}"
+                if parsed.port:
+                    clean_ref += f":{parsed.port}"
+                if clean_ref in ALLOWED_ORIGINS or is_domain_allowed(parsed.hostname):
+                    return clean_ref
+            except:
+                pass
         return None
+    
     clean_origin = origin.rstrip('/')
-    if clean_origin in ALLOWED_ORIGINS or ".pages.dev" in clean_origin:
+    if clean_origin in ALLOWED_ORIGINS:
         return origin
+    
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(clean_origin)
+        if is_domain_allowed(parsed.hostname):
+            return origin
+    except:
+        pass
     return None
 
 def cors_json_response(request: Request, status_code: int, content: dict, block_reason: Optional[str] = None):
     response = JSONResponse(status_code=status_code, content=content)
     origin = get_cors_origin(request)
+    
+    # Originが取得できない場合でも、セキュリティポリシー上問題なければフロントエンドのURLを返す
+    if not origin and (is_domain_allowed(request.headers.get("host")) or not request.headers.get("origin")):
+        origin = "https://www.ymkw.top"
+
     if origin:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-API-KEY, X-Requested-With, Accept, Origin, Referer"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
     
     response.headers["Vary"] = "Origin"
-    
     if block_reason:
         response.headers["X-Debug-Block"] = block_reason
     return response
@@ -119,15 +158,23 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     origin = request.headers.get("origin")
     referer = request.headers.get("referer")
     
-    clean_origin = origin.rstrip('/') if origin else None
-    is_allowed_origin = clean_origin and (clean_origin in ALLOWED_ORIGINS or ".pages.dev" in clean_origin)
-    is_allowed_referer = referer and (any(d in referer for d in ALLOWED_ORIGINS) or ".pages.dev" in referer)
+    is_allowed_origin = bool(get_cors_origin(request))
+    is_allowed_referer = False
+    if referer:
+        try:
+            from urllib.parse import urlparse
+            ref_domain = urlparse(referer).hostname
+            if is_domain_allowed(ref_domain):
+                is_allowed_referer = True
+        except:
+            pass
     
     is_website = is_allowed_origin or is_allowed_referer
     is_ssr_request = request.method == "GET" and not origin and not referer
 
     if not (is_bot or is_website or is_ssr_request):
-        if (origin and not is_allowed_origin) or request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
+        if request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
+            logger.warning(f"Access Denied: Origin={origin}, Referer={referer}, Path={request.url.path}")
             return cors_json_response(request, status_code=403, content={"detail": "Access Denied: Origin/Referer not allowed."}, block_reason="security-policy")
 
     client_ip = request.headers.get("CF-Connecting-IP") or request.client.host
@@ -492,10 +539,10 @@ async def clear_app_cache():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.pages\.dev",
+    allow_origin_regex=r"https://.*\.ymkw\.top|https://.*\.pages\.dev",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-API-KEY", "X-Requested-With", "Accept", "Origin", "Referer"],
+    allow_methods=["*"],
+    allow_headers=["*"],
     expose_headers=["X-Debug-Block"],
 )
 

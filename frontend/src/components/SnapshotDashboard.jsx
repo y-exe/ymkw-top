@@ -34,13 +34,16 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 if (userId && userId !== 'guest') histParams.append('user_id', userId);
                 if (focusedUserId) histParams.append('user_id', focusedUserId);
 
+                const baseParamsStr = baseParams.toString();
+                const histParamsStr = histParams.toString();
+
                 const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = await Promise.all([
-                    fetchAPI(`/api/ranking/total?${baseParams.toString()}`),
-                    fetchAPI(`/api/stats/history/total?${histParams.toString()}`),
-                    fetchAPI(`/api/stats/heatmap/total?${baseParams.toString()}`),
-                    fetchAPI(`/api/stats/analysis/total?${baseParams.toString()}`),
-                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/total?${baseParams.toString()}&user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total?${baseParams.toString()}`) : Promise.resolve(null)
+                    fetchAPI(`/api/ranking/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/history/total${histParamsStr ? `?${histParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/heatmap/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/analysis/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/total?${baseParamsStr}${baseParamsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
                 ]);
 
                 const ranking = await rankRes.json();
