@@ -48,6 +48,12 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
 
                 const ranking = await rankRes.json();
                 const trend = await trendRes.json();
+
+                if (!ranking || ranking.length === 0 || !trend || trend.length === 0) {
+                    window.location.href = `/error?code=502&msg=Empty%20Data&url=${encodeURIComponent(rankRes.url)}`;
+                    return;
+                }
+
                 const heatmap = await heatmapRes.json();
                 const overall = await overallRes.json();
                 const personal = (personalRes && personalRes.ok) ? await personalRes.json() : null;
