@@ -6,6 +6,9 @@ import TrendChart from './charts/TrendChart';
 import ActivityHeatmap from './charts/ActivityHeatmap';
 import ChannelPieChart from './charts/ChannelPieChart';
 import RankingList from './RankingList';
+import MouseEffectCard from './MouseEffectCard';
+import { fetchAPI } from '@/lib/api';
+import { Card } from "@/components/ui/card";
 
 export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -16,9 +19,8 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
         window.__ymkw_data_ready = false;
 
         const fetchAllData = async () => {
-            const API_URL = "https://api.ymkw.top";
             try {
-                const infoRes = await fetch(`${API_URL}/api/snapshots/${snapshotId}`);
+                const infoRes = await fetchAPI(`/api/snapshots/${snapshotId}`);
                 if (!infoRes.ok) throw new Error("Snapshot not found");
                 const info = await infoRes.json();
                 setSnapshotInfo(info);
@@ -28,21 +30,30 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 if (channelId) baseParams.append('channel_id', channelId);
 
                 const histParams = new URLSearchParams(baseParams);
-                
+
                 if (userId && userId !== 'guest') histParams.append('user_id', userId);
                 if (focusedUserId) histParams.append('user_id', focusedUserId);
 
+                const baseParamsStr = baseParams.toString();
+                const histParamsStr = histParams.toString();
+
                 const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = await Promise.all([
-                    fetch(`${API_URL}/api/ranking/total?${baseParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/history/total?${histParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/heatmap/total?${baseParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/analysis/total?${baseParams.toString()}`),
-                    userId && userId !== 'guest' ? fetch(`${API_URL}/api/stats/analysis/total?${baseParams.toString()}&user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetch(`${API_URL}/api/stats/channels_distribution/total?${baseParams.toString()}`) : Promise.resolve(null)
+                    fetchAPI(`/api/ranking/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/history/total${histParamsStr ? `?${histParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/heatmap/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/analysis/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/total?${baseParamsStr}${baseParamsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
                 ]);
 
                 const ranking = await rankRes.json();
                 const trend = await trendRes.json();
+
+                if (!ranking || ranking.length === 0 || !trend || trend.length === 0) {
+                    window.location.href = `/error?code=502&msg=Empty%20Data&url=${encodeURIComponent(rankRes.url)}`;
+                    return;
+                }
+
                 const heatmap = await heatmapRes.json();
                 const overall = await overallRes.json();
                 const personal = (personalRes && personalRes.ok) ? await personalRes.json() : null;
@@ -55,7 +66,13 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 }
 
                 setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error("SnapshotDashboard Load Error:", err);
+                const code = err.status || (err.name === 'TypeError' ? 'NetworkError' : 'unknown');
+                const urlParam = err.url ? `&url=${encodeURIComponent(err.url)}` : '';
+                const msgParam = err.message ? `&msg=${encodeURIComponent(err.message)}` : '';
+                window.location.href = `/error?code=${code}${urlParam}${msgParam}`;
+            }
             finally {
                 window.__ymkw_data_ready = true;
                 window.dispatchEvent(new Event('app-loaded'));
@@ -67,41 +84,54 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     if (!snapshotInfo || !data) return <div className="min-h-[80vh]"></div>;
 
     return (
-        <div className="animate-fade-in">
-            <PageHeader 
-                title={snapshotInfo.title} 
-                subTitle="History Snapshot" 
-                badge={`ID: #${snapshotId}`} 
-                channelId={channelId} 
-                dateText={`Recorded: ${new Date(snapshotInfo.created_at).toLocaleString('ja-JP')}`} 
-            />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-3 flex flex-col gap-6 min-w-0">
-                    <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
-                    {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
-                    
-                    <TrendChart 
-                        key={`trend-${focusedUserId}`}
-                        apiData={data.trend} 
-                        highlightUserId={userId} 
-                        focusedUserId={focusedUserId}
-                        onSearchUser={(id) => setFocusedUserId(id)} 
-                    />
-                    
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                        <div className="xl:col-span-2 min-w-0"><ActivityHeatmap data={data.heatmap} /></div>
-                        <div className="xl:col-span-1 h-full min-h-[300px]">
-                            {!channelId ? <ChannelPieChart data={data.pie} /> : <div className="bg-gray-50 border border-gray-200 rounded-[2rem] p-6 h-full flex items-center justify-center text-gray-400 text-[10px] font-black uppercase tracking-widest text-center">AI Summary Coming Soon</div>}
+        <MouseEffectCard className="min-h-screen">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
+                <PageHeader
+                    title={snapshotInfo.title}
+                    subTitle="History Snapshot"
+                />
+
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex-1 min-w-0 space-y-6">
+                        <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
+
+                        {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
+
+                        <div className="w-full overflow-hidden">
+                            <TrendChart
+                                key={`trend-${focusedUserId}`}
+                                apiData={data.trend}
+                                highlightUserId={userId}
+                                focusedUserId={focusedUserId}
+                                onSearchUser={(id) => setFocusedUserId(id)}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            <div className="xl:col-span-2 w-full min-w-0">
+                                <ActivityHeatmap data={data.heatmap} />
+                            </div>
+                            <div className="xl:col-span-1 w-full min-w-0">
+                                {!channelId ? (
+                                    <ChannelPieChart data={data.pie} />
+                                ) : (
+                                    <Card className="h-full min-h-[300px] flex items-center justify-center p-6">
+                                        <div className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-center">
+                                            AI Summary Coming Soon
+                                        </div>
+                                    </Card>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full lg:w-[320px] xl:w-[380px] flex-shrink-0">
+                        <div className="sticky top-20">
+                            <RankingList data={data.ranking} highlightUserId={userId} />
                         </div>
                     </div>
                 </div>
-                <div className="lg:col-span-1 min-w-0">
-                    <div className="sticky top-20">
-                        <RankingList data={data.ranking} highlightUserId={userId} />
-                    </div>
-                </div>
             </div>
-        </div>
+        </MouseEffectCard>
     );
 }

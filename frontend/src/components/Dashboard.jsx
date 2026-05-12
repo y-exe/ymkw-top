@@ -5,7 +5,12 @@ import StatsCard from './StatsCard';
 import TrendChart from './charts/TrendChart';
 import ActivityHeatmap from './charts/ActivityHeatmap';
 import ChannelPieChart from './charts/ChannelPieChart';
+import ChannelStatsCard from './charts/ChannelStatsCard';
+import GrowthComparison from './charts/GrowthComparison';
 import RankingList from './RankingList';
+import MouseEffectCard from './MouseEffectCard';
+import { fetchAPI } from '@/lib/api';
+import { Card } from "@/components/ui/card";
 
 export default function Dashboard({ year, month, channelId, userId }) {
     const [data, setData] = useState(null);
@@ -16,38 +21,43 @@ export default function Dashboard({ year, month, channelId, userId }) {
         window.__ymkw_data_ready = false;
 
         const fetchData = async () => {
-            const API_URL = "https://api.ymkw.top";
             const params = new URLSearchParams();
             if (channelId) params.append('channel_id', channelId);
+
+            const prevDate = new Date(year, month - 2, 1);
+            const prevYear = prevDate.getFullYear();
+            const prevMonth = prevDate.getMonth() + 1;
 
             const histParams = new URLSearchParams(params);
             const targetId = focusedUserId || (userId !== 'guest' ? userId : null);
             if (targetId) histParams.set('user_id', targetId);
 
             try {
+                const paramsStr = params.toString();
+                const histParamsStr = histParams.toString();
+
                 const responses = await Promise.all([
-                    fetch(`${API_URL}/api/ranking/monthly/${year}/${month}?${params.toString()}`),
-                    fetch(`${API_URL}/api/stats/history/${year}/${month}?${histParams.toString()}`),
-                    fetch(`${API_URL}/api/stats/heatmap/${year}/${month}?${params.toString()}`),
-                    fetch(`${API_URL}/api/stats/analysis/${year}/${month}?${params.toString()}`),
-                    userId && userId !== 'guest' ? fetch(`${API_URL}/api/stats/analysis/${year}/${month}?${params.toString()}&user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetch(`${API_URL}/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
+                    fetchAPI(`/api/ranking/monthly/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/api/stats/history/${year}/${month}${histParamsStr ? `?${histParamsStr}` : ''}`),
+                    fetchAPI(`/api/stats/heatmap/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/api/stats/analysis/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/api/stats/analysis/${prevYear}/${prevMonth}${paramsStr ? `?${paramsStr}` : ''}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/${year}/${month}?${paramsStr}${paramsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null)
                 ]);
 
-                for (const res of responses) {
-                    if (res && !res.ok) {
-                        if (res.status === 429 || res.status >= 500) {
-                            window.location.href = '/error';
-                            return;
-                        }
-                    }
-                }
-
-                const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = responses;
+                const [rankRes, trendRes, heatmapRes, overallRes, prevOverallRes, personalRes, pieRes] = responses;
                 const ranking = await rankRes.json();
                 const trend = await trendRes.json();
+
+                if (!ranking || ranking.length === 0 || !trend || trend.length === 0) {
+                    window.location.href = `/error?code=502&msg=Empty%20Data&url=${encodeURIComponent(rankRes.url)}`;
+                    return;
+                }
+
                 const heatmap = await heatmapRes.json();
                 const overall = await overallRes.json();
+                const prevOverall = await prevOverallRes.json();
                 const personal = (personalRes && personalRes.ok) ? await personalRes.json() : null;
                 const pie = (pieRes && pieRes.ok) ? await pieRes.json() : [];
 
@@ -57,10 +67,13 @@ export default function Dashboard({ year, month, channelId, userId }) {
                     if (idx !== -1) myData = { ...ranking[idx], rank: idx + 1 };
                 }
 
-                setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
+                setData({ ranking, trend, heatmap, pie, overall, prevOverall, personal, myData, topUserCount: ranking[0]?.count || 0 });
             } catch (error) {
                 console.error("Dashboard Load Error:", error);
-                window.location.href = '/error';
+                const code = error.status || (error.name === 'TypeError' ? 'NetworkError' : 'unknown');
+                const urlParam = error.url ? `&url=${encodeURIComponent(error.url)}` : '';
+                const msgParam = error.message ? `&msg=${encodeURIComponent(error.message)}` : '';
+                window.location.href = `/error?code=${code}${urlParam}${msgParam}`;
             } finally {
                 setIsLoaded(true);
                 window.__ymkw_data_ready = true;
@@ -73,32 +86,55 @@ export default function Dashboard({ year, month, channelId, userId }) {
     if (!isLoaded || !data) return <div className="min-h-[80vh]"></div>;
 
     return (
-        <div className="animate-fade-in">
-            <PageHeader title={`${year}.${month}`} subTitle="Monthly Report" badge="Statistics" channelId={channelId} dateText="Server Activity Analytics" />
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-3 flex flex-col gap-6 min-w-0">
-                    <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
-                    {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
-                    <TrendChart 
-                        key={`trend-${focusedUserId}`}
-                        apiData={data.trend} 
-                        highlightUserId={userId} 
-                        focusedUserId={focusedUserId}
-                        onSearchUser={(id) => setFocusedUserId(id)} 
-                    />
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                        <div className="xl:col-span-2 min-w-0"><ActivityHeatmap data={data.heatmap} /></div>
-                        <div className="xl:col-span-1 h-full min-h-[300px]">
-                            {!channelId ? <ChannelPieChart data={data.pie} /> : <div className="bg-gray-50 border border-gray-200 rounded-[2rem] p-6 h-full flex items-center justify-center text-gray-400 text-[10px] font-black uppercase tracking-widest text-center">AI Insights & Top Topics<br/>Coming Soon</div>}
+        <MouseEffectCard className="min-h-screen">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
+                <PageHeader title={`${year}.${month}`} subTitle="Monthly Report" />
+
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex-1 min-w-0 space-y-6">
+                        <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
+
+                        {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
+
+                        <div className="w-full overflow-hidden">
+                            <TrendChart
+                                key={`trend-${focusedUserId}`}
+                                apiData={data.trend}
+                                highlightUserId={userId}
+                                focusedUserId={focusedUserId}
+                                onSearchUser={(id) => setFocusedUserId(id)}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            <div className="xl:col-span-2 w-full min-w-0">
+                                <ActivityHeatmap data={data.heatmap} />
+                            </div>
+                            <div className="xl:col-span-1 w-full min-w-0">
+                                <div className="h-full">
+                                    {!channelId ? (
+                                        <ChannelPieChart data={data.pie} />
+                                    ) : (
+                                        <ChannelStatsCard
+                                            ranking={data.ranking}
+                                            overall={data.overall}
+                                            prevOverall={data.prevOverall}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <GrowthComparison current={data.overall} previous={data.prevOverall} />
+                    </div>
+
+                    <div className="w-full lg:w-[320px] xl:w-[380px] flex-shrink-0">
+                        <div className="sticky top-20">
+                            <RankingList data={data.ranking} highlightUserId={userId} />
                         </div>
                     </div>
                 </div>
-                <div className="lg:col-span-1 min-w-0">
-                    <div className="sticky top-20">
-                        <RankingList data={data.ranking} highlightUserId={userId} />
-                    </div>
-                </div>
             </div>
-        </div>
+        </MouseEffectCard>
     );
 }

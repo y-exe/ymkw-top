@@ -1,35 +1,41 @@
 ---
+import { render } from "cloudflare-error-page";
+
+interface Props {
+  error: unknown;
+}
 import { getCloudflareErrorHtml } from "../utils/cf-error.js";
 
+const { error } = Astro.props;
 const { url } = Astro;
-const errorCode = url.searchParams.get("code") || "502";
-const errorMsg = url.searchParams.get("msg") || "Bad Gateway";
-const errorUrl = url.searchParams.get("url") || "";
+const errorCode = "500";
+const errorMsg = error instanceof Error ? error.message : "Internal Server Error";
+const stack = error instanceof Error ? error.stack : "";
 const currentOrigin = url.origin;
 
-const isOriginIssue = errorCode === "unknown" || !errorCode;
-
-const endpointHtml = errorUrl
-  ? "<div><strong>Endpoint:</strong> " + errorUrl + "</div>"
+const stackHtml = stack
+  ? '<div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(0,0,0,0.1); font-size: 0.85em; white-space: pre-wrap;">' +
+    stack +
+    "</div>"
   : "";
 
 const html = getCloudflareErrorHtml({
   title: errorMsg,
   errorCode: parseInt(errorCode, 10),
   htmlTitle: `${errorCode}: ${errorMsg}`,
-  isOriginIssue: isOriginIssue,
+  isOriginIssue: false,
   cfLocation: url.host || "Gateway",
   whatHappened:
-    '<p style="margin-bottom: 16px; line-height: 1.6;">APIサーバーへの接続に失敗しました。<br/>サーバーが混み合っているか、アクセス制限がかかっている<br/>可能性があります。</p>' +
+    '<p style="margin-bottom: 16px; line-height: 1.6;">サーバー内部で予期せぬエラーが発生しました。<br/>システムの一時的な障害、またはバグの可能性があります。</p>' +
     '<div style="font-size: 0.85em; opacity: 0.8; padding: 16px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 6px; font-family: monospace; line-height: 1.6; word-break: break-all;">' +
     '<div style="font-weight: 700; margin-bottom: 8px; font-size: 1.1em; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">Debug Information</div>' +
     "<div><strong>Error Code:</strong> " +
     errorCode +
     "</div>" +
-    endpointHtml +
     "<div><strong>Message:</strong> " +
     errorMsg +
     "</div>" +
+    stackHtml +
     "<div><strong>Origin:</strong> " +
     currentOrigin +
     "</div>" +
@@ -37,8 +43,8 @@ const html = getCloudflareErrorHtml({
   whatCanIDo:
     '<p style="margin-bottom: 24px; line-height: 1.6;">' +
     "しばらくしてもこのエラーが治らない場合は<br/>" +
-    "Discordサーバーのチケットや要望、y_xyzのDMよりご連絡ください。<br/><br/>" +
-    "エラー等が治ったら際、再読み込みではなくいったんトップページ戻らないと<br/>修正が反映されない恐れがありますのでご注意ください" +
+    "Discordサーバーのチケットや要望 又は、y_xyzのDMよりご連絡ください。<br/><br/>" +
+    "エラー等が治ったら際、再読み込みではなくいったんトップページ戻らないと<br/>修正が反映されない恐れがありますのでご注意ください。" +
     "</p>" +
     '<div><a href="/" style="display:inline-block; padding: 12px 24px; background: #0051c3; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">トップページに戻る</a></div>',
 });

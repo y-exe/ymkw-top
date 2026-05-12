@@ -1,10 +1,11 @@
+import { fetchAPI } from "@/lib/api";
+
 export const GET = async () => {
-  const API_URL = "https://api.ymkw.top";
   const SITE_URL = "https://www.ymkw.top";
 
   let snapshots = [];
   try {
-    const res = await fetch(`${API_URL}/api/snapshots`);
+    const res = await fetchAPI("/api/snapshots");
     if (res.ok) {
       snapshots = await res.json();
     }
@@ -26,17 +27,17 @@ export const GET = async () => {
   ];
 
   const urlEntries = [
-    ...staticPages.map(p => ({ 
-      loc: `${SITE_URL}${p.url}`, 
-      priority: p.priority 
+    ...staticPages.map(p => ({
+      loc: `${SITE_URL}${p.url}`,
+      priority: p.priority
     })),
-    ...months.map(d => ({ 
-      loc: `${SITE_URL}/month/${d.y}/${d.m}`, 
-      priority: 0.8 
+    ...months.map(d => ({
+      loc: `${SITE_URL}/month/${d.y}/${d.m}`,
+      priority: 0.8
     })),
-    ...snapshots.map(s => ({ 
-      loc: `${SITE_URL}/open/${s.snapshot_id}`, 
-      priority: 0.6 
+    ...snapshots.map(s => ({
+      loc: `${SITE_URL}/open/${s.snapshot_id}`,
+      priority: 0.6
     }))
   ];
 

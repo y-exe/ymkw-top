@@ -35,7 +35,7 @@ if (Astro.request.method === "POST") {
 }
 
 const channelId = url.searchParams.get('channel');
-let userId = url.searchParams.get('user') || Astro.cookies.get('user_id')?.value;
+let userId = Astro.cookies.get('user_id')?.value;
 if (userId === 'guest') userId = null;
 
 Astro.response.headers.set('Cache-Control', isRestricted ? 'no-store' : 'public, s-maxage=600');
