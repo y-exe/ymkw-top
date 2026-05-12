@@ -7,7 +7,6 @@ import config
 import logging
 import sys
 
-# ロギング設定
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -15,7 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("history-backfill")
 
-# 除外するチャンネルID（必要に応じて追加）
+# 除外するチャンネルID
 EXCLUDE_CHANNEL_IDS = [
 ]
 
@@ -35,7 +34,6 @@ async def backfill():
 
     pool = await asyncpg.create_pool(config.DB_DSN)
     
-    # 過去4日分を取得
     after_date = discord.utils.utcnow() - datetime.timedelta(days=4)
     logger.info(f"Fetching messages after {after_date} (Last 4 days)")
     
@@ -48,7 +46,6 @@ async def backfill():
     total_messages = 0
     total_users = 0
     
-    # サーバー内のすべてのテキストチャンネルを取得
     channels = [c for c in guild.text_channels if c.id not in EXCLUDE_CHANNEL_IDS]
     logger.info(f"Found {len(channels)} channels to scan.")
 
@@ -76,7 +73,6 @@ async def backfill():
                     len(msg.content)
                 ))
                 
-                # ユーザー情報の収集
                 if msg.author.id not in user_data:
                     avatar = str(msg.author.display_avatar.url) if msg.author.display_avatar else None
                     user_data[msg.author.id] = (
@@ -86,11 +82,9 @@ async def backfill():
                         avatar
                     )
                 
-                # レート制限対策：100メッセージ（Discordの1ページ分）ごとに少し休む
                 if len(batch_messages) % 100 == 0:
                     await asyncio.sleep(0.8)
 
-                # 500メッセージごとにDBに書き込み
                 if len(batch_messages) >= 500:
                     await save_to_db(pool, batch_messages, user_data)
                     channel_count += len(batch_messages)
@@ -99,7 +93,6 @@ async def backfill():
                     # DB書き込み後は少し長めに休む
                     await asyncio.sleep(1.5)
 
-            # 残りのデータを保存
             if batch_messages or user_data:
                 await save_to_db(pool, batch_messages, user_data)
                 channel_count += len(batch_messages)
@@ -107,7 +100,6 @@ async def backfill():
             logger.info(f"Finished {channel.name}: Processed {channel_count} messages.")
             total_messages += channel_count
             
-            # チャンネル間に2秒程度の待機を挟む（レート制限回避）
             await asyncio.sleep(2.0)
             
         except discord.Forbidden:
@@ -122,7 +114,6 @@ async def save_to_db(pool, messages, users):
     async with pool.acquire() as conn:
         async with conn.transaction():
             if users:
-                # ユーザー情報は最新のものに更新する（UPSERT）
                 await conn.executemany('''
                     INSERT INTO users (user_id, display_name, username, avatar_url)
                     VALUES ($1, $2, $3, $4)
@@ -133,7 +124,6 @@ async def save_to_db(pool, messages, users):
                 ''', list(users.values()))
             
             if messages:
-                # メッセージは重複を避ける（基本はON CONFLICT DO NOTHINGだが、将来的に集計修正があればUPDATEも可）
                 await conn.executemany('''
                     INSERT INTO messages (message_id, user_id, channel_id, guild_id, created_at, is_bot, char_count)
                     VALUES ($1, $2, $3, $4, $5, $6, $7)

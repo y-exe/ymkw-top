@@ -11,11 +11,10 @@ async def reset_db():
     try:
         conn = await asyncpg.connect(DB_DSN)
         
-        print("スナップショットテーブルを初期化しています...")
+        print("初期化")
         await conn.execute("TRUNCATE TABLE snapshots RESTART IDENTITY;")
         
-        print("✅ 完了しました。")
-        print("スナップショットは全削除され、次のIDは 1 から始まります。")
+        print("完了")
         
         await conn.close()
     except Exception as e:
@@ -23,7 +22,7 @@ async def reset_db():
 
 if __name__ == "__main__":
     if not DB_DSN:
-        print("エラー: .envファイルが見つからないか、DB_DSNが設定されていません。")
+        print("エラー")
     else:
         import sys
         if sys.platform == 'win32':

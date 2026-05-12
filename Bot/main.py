@@ -14,24 +14,22 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"ログイン {bot.user} (ID: {bot.user.id})")
     
     try:
         synced = await bot.tree.sync()
-        print(f"スラッシュコマンドを同期しました: {len(synced)}個")
+        print(f"コマンド同期: {len(synced)}")
     except Exception as e:
         print(f"同期エラー: {e}")
     heartbeat_task.start()
 
 async def load_extensions():
-    """cogsフォルダにある .py ファイルを全て読み込む"""
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py"):
             try:
                 await bot.load_extension(f"cogs.{filename[:-3]}")
-                print(f"拡張機能をロードしました: {filename}")
+                print(f"ロード完了: {filename}")
             except Exception as e:
-                print(f"拡張機能のロードに失敗しました ({filename}): {e}")
+                print(f"拡張機能ロード失敗 ({filename}): {e}")
 
 async def main():
     if not config.TOKEN:
@@ -43,12 +41,12 @@ async def main():
         try:
             await bot.start(config.TOKEN)
         except discord.LoginFailure:
-            print("エラー: トークンが無効です。")
+            print("トークンが無効")
         except Exception as e:
-            print(f"予期せぬエラーが発生しました: {e}")
+            print(f"エラー； {e}")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Botを停止しました。")
+        print("停止")

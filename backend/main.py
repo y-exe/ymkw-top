@@ -119,7 +119,6 @@ def is_domain_allowed(domain: Optional[str]) -> bool:
 def get_cors_origin(request: Request) -> Optional[str]:
     origin = request.headers.get("origin")
     if not origin:
-        # Originがない場合はRefererから推測を試みる
         referer = request.headers.get("referer")
         if referer:
             try:
@@ -151,7 +150,6 @@ def cors_json_response(request: Request, status_code: int, content: dict, block_
     response = JSONResponse(status_code=status_code, content=content)
     origin = get_cors_origin(request)
     
-    # Originが取得できない場合でも、セキュリティポリシー上問題なければフロントエンドのURLを返す
     if not origin and (is_domain_allowed(request.headers.get("host")) or not request.headers.get("origin")):
         origin = "https://www.ymkw.top"
 
@@ -235,7 +233,6 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
 
 @app.on_event("startup")
 async def startup():
-    # 監視用のハートビートタスクを開始
     async def heartbeat_loop():
         push_url = os.getenv("WATCHER_PUSH_URL")
         if not push_url:
@@ -312,10 +309,8 @@ async def get_channels(response: Response):
     response.headers["Cache-Control"] = "public, max-age=3600"
     if cached: return cached
     
-    # データベースの全チャンネルを取得（後でホワイトリストでフィルタリング）
     rows = await pool.fetch("SELECT * FROM channels WHERE is_active = TRUE ORDER BY position ASC")
     
-    # ホワイトリストにあるチャンネルのみを抽出
     res = [
         {"id": str(r["channel_id"]), "name": r["name"], "category": r["category_name"] if r["category_name"] else "未分類"} 
         for r in rows if r["channel_id"] in WHITELIST_CHANNEL_IDS

@@ -9,25 +9,19 @@ import config
 import aiohttp
 import os
 
-# =========================================================
-# 定数設定
-# =========================================================
+# 定数
 EMOJI_FIRST = "<:first:1452959005625417790>"
 EMOJI_SECOND = "<:second:1452958981969543168>"
 EMOJI_THIRD = "<:third:1452958880379306024>"
 EXCLUDE_CHANNEL_ID = 1406033558757314752
 KING_ROLE_ID = 1452968848998531245
 
-# .envからAPI_SECRETを読み込む
 API_SECRET = os.getenv("API_SECRET", "default_insecure_secret_change_me")
 API_HEADERS = {"X-API-KEY": API_SECRET}
 
-# 削除済みユーザー除外フィルタ
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
-# =========================================================
 # 古いボタン対策
-# =========================================================
 class DummyOldRankingView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -39,14 +33,11 @@ class DummyOldRankingView(discord.ui.View):
             ephemeral=True
         )
 
-# =========================================================
 # 月選択プルダウン
-# =========================================================
 class MonthSelect(discord.ui.Select):
     def __init__(self, bot):
         self.bot = bot
         options = []
-        # JSTで現在時刻を取得
         now = datetime.now(ZoneInfo("Asia/Tokyo"))
         for i in range(12):
             date = now - relativedelta(months=i)
@@ -72,9 +63,6 @@ class MonthSelectView(discord.ui.View):
         super().__init__()
         self.add_item(MonthSelect(bot))
 
-# =========================================================
-# 削除用プルダウン (Snapshot Close)
-# =========================================================
 class SnapshotDeleteSelect(discord.ui.Select):
     def __init__(self, snapshots):
         options = []
@@ -106,9 +94,6 @@ class SnapshotDeleteView(discord.ui.View):
         super().__init__()
         self.add_item(SnapshotDeleteSelect(snapshots))
 
-# =========================================================
-# Ranking Cog 本体
-# =========================================================
 class Ranking(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -117,9 +102,6 @@ class Ranking(commands.Cog):
     async def get_db_pool(self):
         return await asyncpg.create_pool(config.DB_DSN)
 
-    # -----------------------------------------------------
-    # DiscordのメッセージUI作成 (Component v2)
-    # -----------------------------------------------------
     def create_ranking_view(self, title: str, rows, year: int, month: int, show_role_reward: bool = True, custom_url: str = None):
         container = ui.Container(accent_color=0x00ddff)
 
@@ -177,9 +159,7 @@ class Ranking(commands.Cog):
 
         return view
 
-    # -----------------------------------------------------
     # 月次タスク
-    # -----------------------------------------------------
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Tokyo"))])
     async def monthly_task(self):
         now = datetime.now(ZoneInfo("Asia/Tokyo"))
@@ -188,9 +168,7 @@ class Ranking(commands.Cog):
         guild = self.bot.get_guild(config.GUILD_ID)
         await self.run_ranking_logic(guild, last_month.year, last_month.month, is_auto=True)
 
-    # -----------------------------------------------------
     # コマンド: /month
-    # -----------------------------------------------------
     @app_commands.command(name="month", description="【管理者用】指定した月のランキングを手動送信")
     async def open_month(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
@@ -198,9 +176,7 @@ class Ranking(commands.Cog):
         view = MonthSelectView(self.bot)
         await interaction.response.send_message("集計したい月を選択してください:", view=view, ephemeral=True)
 
-    # -----------------------------------------------------
-    # コマンド: /open (全期間・スナップショット作成)
-    # -----------------------------------------------------
+    # コマンド: /open
     @app_commands.command(name="open", description="【管理者用】全期間のランキングを表示しスナップショットを作成")
     async def open_total(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
@@ -273,9 +249,7 @@ class Ranking(commands.Cog):
         finally:
             await pool.close()
 
-    # -----------------------------------------------------
-    # コマンド: /close (スナップショット削除)
-    # -----------------------------------------------------
+    # コマンド: /close
     @app_commands.command(name="close", description="【管理者用】作成したスナップショットを選択して削除")
     async def close_snapshot(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
@@ -299,9 +273,7 @@ class Ranking(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"エラーが発生しました: {e}")
 
-    # -----------------------------------------------------
     # 共通ロジック
-    # -----------------------------------------------------
     async def run_ranking_logic(self, guild, year, month, channel=None, is_auto=False):
         pool = await self.get_db_pool()
         start_date = datetime(year, month, 1)
