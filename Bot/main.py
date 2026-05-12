@@ -3,10 +3,8 @@ import asyncio
 import os
 from discord.ext import commands
 import config
+from monitoring import heartbeat_task
 
-# ---------------------------------------------------------
-# Botの設定・Intents（権限）の有効化
-# ---------------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True 
 intents.members = True
@@ -14,26 +12,17 @@ intents.guilds = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ---------------------------------------------------------
-# 起動時のイベント
-# ---------------------------------------------------------
 @bot.event
 async def on_ready():
-    print("------------------------------------------------------")
-    print(f"ログイン成功: {bot.user} (ID: {bot.user.id})")
-    print(f"参加サーバー数: {len(bot.guilds)}")
-    print("------------------------------------------------------")
+    print(f"ログイン {bot.user} (ID: {bot.user.id})")
     
-    # スラッシュコマンドをサーバーに同期
     try:
         synced = await bot.tree.sync()
         print(f"スラッシュコマンドを同期しました: {len(synced)}個")
     except Exception as e:
         print(f"同期エラー: {e}")
+    heartbeat_task.start()
 
-# ---------------------------------------------------------
-# 拡張機能 (Cogs) の読み込み
-# ---------------------------------------------------------
 async def load_extensions():
     """cogsフォルダにある .py ファイルを全て読み込む"""
     for filename in os.listdir("./cogs"):
@@ -44,9 +33,6 @@ async def load_extensions():
             except Exception as e:
                 print(f"拡張機能のロードに失敗しました ({filename}): {e}")
 
-# ---------------------------------------------------------
-# メイン実行処理
-# ---------------------------------------------------------
 async def main():
     if not config.TOKEN:
         print("エラー: .envにトークンが設定されていません。")

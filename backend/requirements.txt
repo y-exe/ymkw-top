@@ -4,3 +4,4 @@ python-dotenv
 asyncpg
 pydantic
 diskcache
+aiohttp
