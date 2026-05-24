@@ -24,6 +24,9 @@ class Logger(commands.Cog):
             CREATE INDEX IF NOT EXISTS idx_messages_user ON messages (user_id);
             CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages (channel_id);
             CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages (created_at);
+            CREATE INDEX IF NOT EXISTS idx_messages_human_created_user ON messages (created_at, user_id) WHERE is_bot = FALSE;
+            CREATE INDEX IF NOT EXISTS idx_messages_human_channel_created_user ON messages (channel_id, created_at, user_id) WHERE is_bot = FALSE;
+            CREATE INDEX IF NOT EXISTS idx_messages_human_user_created ON messages (user_id, created_at) WHERE is_bot = FALSE;
         ''')
 
     async def cog_unload(self):

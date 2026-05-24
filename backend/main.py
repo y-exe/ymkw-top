@@ -167,6 +167,8 @@ def cors_json_response(request: Request, status_code: int, content: dict, block_
 RATE_LIMIT_WINDOW = 10
 MAX_REQUESTS = 150
 BLOCK_DURATION = 600
+LIVE_TOTAL_CACHE_TTL = 1800
+TOTAL_CACHE_WARM_INTERVAL = 600
 
 @app.middleware("http")
 async def security_and_rate_limit_middleware(request: Request, call_next):
@@ -262,6 +264,7 @@ async def startup():
         
         pool = await asyncpg.create_pool(DB_DSN, min_size=10, max_size=50, ssl=False, command_timeout=60)
         logger.info("Database connection pool created (size: 10-50).")
+        asyncio.create_task(warm_total_cache_loop())
     except Exception as e:
         logger.error(f"Failed to create database pool: {e}")
         raise e
@@ -294,6 +297,14 @@ class SnapshotItem(BaseModel):
 
 def format_ranking_response(rows):
     return [{"user_id": str(r["user_id"]), "display_name": r["display_name"] or "Unknown", "username": r["username"] or "unknown", "avatar": r["avatar_url"], "count": r["c"], "char_count": r["chars"] or 0} for r in rows]
+
+def get_month_bounds(year: int, month: int) -> Tuple[datetime, datetime]:
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="month must be between 1 and 12")
+    start = datetime(year, month, 1)
+    if month == 12:
+        return start, datetime(year + 1, 1, 1)
+    return start, datetime(year, month + 1, 1)
 
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
@@ -370,9 +381,10 @@ async def get_monthly_ranking(year: int, month: int, response: Response, channel
     cached = get_cache(ckey)
     response.headers["Cache-Control"] = "public, max-age=600"
     if cached: return cached
+    start_date, end_date = get_month_bounds(year, month)
     c_f = "AND m.channel_id = $3" if channel_id else ""
-    query = f"SELECT m.user_id, count(*) as c, sum(m.char_count) as chars, u.display_name, u.username, u.avatar_url FROM messages m LEFT JOIN users u ON m.user_id = u.user_id WHERE extract(year from m.created_at) = $1 AND extract(month from m.created_at) = $2 AND m.is_bot = FALSE AND {DELETED_USER_FILTER} {c_f} GROUP BY m.user_id, u.display_name, u.username, u.avatar_url ORDER BY c DESC LIMIT 100"
-    rows = await pool.fetch(query, year, month, *([channel_id] if channel_id else []))
+    query = f"SELECT m.user_id, count(*) as c, sum(m.char_count) as chars, u.display_name, u.username, u.avatar_url FROM messages m LEFT JOIN users u ON m.user_id = u.user_id WHERE m.created_at >= $1 AND m.created_at < $2 AND m.is_bot = FALSE AND {DELETED_USER_FILTER} {c_f} GROUP BY m.user_id, u.display_name, u.username, u.avatar_url ORDER BY c DESC LIMIT 100"
+    rows = await pool.fetch(query, start_date, end_date, *([channel_id] if channel_id else []))
     res = format_ranking_response(rows)
     set_cache(ckey, res, ttl=600)
     return res
@@ -381,7 +393,7 @@ async def get_monthly_ranking(year: int, month: int, response: Response, channel
 async def get_total_ranking(response: Response, channel_id: Optional[int] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"rank_t_{channel_id}_{end_date}"
     cached = get_cache(ckey)
-    ttl = 86400 if end_date else 300
+    ttl = 86400 if end_date else LIVE_TOTAL_CACHE_TTL
     response.headers["Cache-Control"] = f"public, max-age={ttl}"
     if cached: return cached
     p = []; f = ["m.is_bot = FALSE", DELETED_USER_FILTER]
@@ -399,11 +411,12 @@ async def get_daily_history(year: int, month: int, response: Response, channel_i
     cached = get_cache(ckey)
     response.headers["Cache-Control"] = "public, max-age=600"
     if cached: return cached
+    start_date, end_date = get_month_bounds(year, month)
     c_f = "AND channel_id = $3" if channel_id else ""
-    params = [year, month]
+    params = [start_date, end_date]
     if channel_id: params.append(channel_id)
-    t_rows = await pool.fetch(f"SELECT DATE(created_at) as d, count(*) as c FROM messages WHERE extract(year from created_at) = $1 AND extract(month from created_at) = $2 AND is_bot = FALSE {c_f} GROUP BY DATE(created_at) ORDER BY d", *params)
-    top_u_sql = f"SELECT m.user_id, count(*) as c FROM messages m LEFT JOIN users u ON m.user_id = u.user_id WHERE extract(year from m.created_at) = $1 AND extract(month from m.created_at) = $2 AND m.is_bot = FALSE AND {DELETED_USER_FILTER} {c_f.replace('channel_id', 'm.channel_id')} GROUP BY m.user_id ORDER BY c DESC LIMIT 100"
+    t_rows = await pool.fetch(f"SELECT DATE(created_at) as d, count(*) as c FROM messages WHERE created_at >= $1 AND created_at < $2 AND is_bot = FALSE {c_f} GROUP BY DATE(created_at) ORDER BY d", *params)
+    top_u_sql = f"SELECT m.user_id, count(*) as c FROM messages m LEFT JOIN users u ON m.user_id = u.user_id WHERE m.created_at >= $1 AND m.created_at < $2 AND m.is_bot = FALSE AND {DELETED_USER_FILTER} {c_f.replace('channel_id', 'm.channel_id')} GROUP BY m.user_id ORDER BY c DESC LIMIT 100"
     top_u = await pool.fetch(top_u_sql, *params)
     target_ids = [str(r['user_id']) for r in top_u]
     if user_id:
@@ -415,7 +428,7 @@ async def get_daily_history(year: int, month: int, response: Response, channel_i
         ids_plist = [int(i) for i in target_ids]
         f_params = params + [ids_plist]
         p_idx = f"${len(f_params)}"
-        rows = await pool.fetch(f"SELECT DATE(created_at) as d, user_id, count(*) as c FROM messages WHERE extract(year from created_at) = $1 AND extract(month from created_at) = $2 AND is_bot = FALSE {c_f} AND user_id = ANY({p_idx}::bigint[]) GROUP BY DATE(created_at), user_id ORDER BY d", *f_params)
+        rows = await pool.fetch(f"SELECT DATE(created_at) as d, user_id, count(*) as c FROM messages WHERE created_at >= $1 AND created_at < $2 AND is_bot = FALSE {c_f} AND user_id = ANY({p_idx}::bigint[]) GROUP BY DATE(created_at), user_id ORDER BY d", *f_params)
         for r in rows:
             d = r['d'].strftime("%Y-%m-%d")
             if d not in data_map: data_map[d] = {"date": d, "total": 0}
@@ -430,7 +443,7 @@ async def get_daily_history(year: int, month: int, response: Response, channel_i
 async def get_total_history(response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[List[str]] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"hist_t_{channel_id}_{user_id}_{end_date}"
     cached = get_cache(ckey)
-    ttl = 86400 if end_date else 300
+    ttl = 86400 if end_date else LIVE_TOTAL_CACHE_TTL
     response.headers["Cache-Control"] = f"public, max-age={ttl}"
     if cached: return cached
     p = []; f = ["is_bot = FALSE"]
@@ -465,8 +478,9 @@ async def get_monthly_heatmap(year: int, month: int, response: Response, channel
     cached = get_cache(ckey)
     response.headers["Cache-Control"] = "public, max-age=600"
     if cached: return cached
+    start_date, end_date = get_month_bounds(year, month)
     c_f = "AND channel_id = $3" if channel_id else ""
-    rows = await pool.fetch(f"SELECT EXTRACT(DOW FROM created_at AT TIME ZONE 'Asia/Tokyo') as dow, EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Tokyo') as hour, count(*) as count FROM messages WHERE extract(year from created_at) = $1 AND extract(month from created_at) = $2 AND is_bot = FALSE {c_f} GROUP BY dow, hour ORDER BY dow, hour", year, month, *([channel_id] if channel_id else []))
+    rows = await pool.fetch(f"SELECT EXTRACT(DOW FROM created_at AT TIME ZONE 'Asia/Tokyo') as dow, EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Tokyo') as hour, count(*) as count FROM messages WHERE created_at >= $1 AND created_at < $2 AND is_bot = FALSE {c_f} GROUP BY dow, hour ORDER BY dow, hour", start_date, end_date, *([channel_id] if channel_id else []))
     res = [{"dow": int(r['dow']), "hour": int(r['hour']), "count": r['count']} for r in rows]
     set_cache(ckey, res, ttl=600)
     return res
@@ -475,7 +489,7 @@ async def get_monthly_heatmap(year: int, month: int, response: Response, channel
 async def get_total_heatmap(response: Response, channel_id: Optional[int] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"heat_t_{channel_id}_{end_date}"
     cached = get_cache(ckey)
-    ttl = 86400 if end_date else 300
+    ttl = 86400 if end_date else LIVE_TOTAL_CACHE_TTL
     response.headers["Cache-Control"] = f"public, max-age={ttl}"
     if cached: return cached
     p = []; f = ["is_bot = FALSE"]
@@ -492,7 +506,8 @@ async def get_monthly_channel_distribution(year: int, month: int, response: Resp
     cached = get_cache(ckey)
     response.headers["Cache-Control"] = "public, max-age=600"
     if cached: return cached
-    rows = await pool.fetch("SELECT c.name, count(*) as count FROM messages m JOIN channels c ON m.channel_id = c.channel_id WHERE extract(year from m.created_at) = $1 AND extract(month from m.created_at) = $2 AND m.is_bot = FALSE GROUP BY c.name ORDER BY count DESC LIMIT 10", year, month)
+    start_date, end_date = get_month_bounds(year, month)
+    rows = await pool.fetch("SELECT c.name, count(*) as count FROM messages m JOIN channels c ON m.channel_id = c.channel_id WHERE m.created_at >= $1 AND m.created_at < $2 AND m.is_bot = FALSE GROUP BY c.name ORDER BY count DESC LIMIT 10", start_date, end_date)
     res = [{"name": r['name'], "value": r['count']} for r in rows]
     set_cache(ckey, res, ttl=600)
     return res
@@ -501,7 +516,7 @@ async def get_monthly_channel_distribution(year: int, month: int, response: Resp
 async def get_total_channel_distribution(response: Response, end_date: Optional[datetime] = Query(None)):
     ckey = f"pie_t_{end_date}"
     cached = get_cache(ckey)
-    ttl = 86400 if end_date else 300
+    ttl = 86400 if end_date else LIVE_TOTAL_CACHE_TTL
     response.headers["Cache-Control"] = f"public, max-age={ttl}"
     if cached: return cached
     p = []; f = ["m.is_bot = FALSE"]
@@ -517,7 +532,8 @@ async def get_monthly_analysis(year: int, month: int, response: Response, channe
     cached = get_cache(ckey)
     response.headers["Cache-Control"] = "public, max-age=600"
     if cached: return cached
-    p = [year, month]; f = ["extract(year from created_at) = $1", "extract(month from created_at) = $2", "is_bot = FALSE"]
+    start_date, end_date = get_month_bounds(year, month)
+    p = [start_date, end_date]; f = ["created_at >= $1", "created_at < $2", "is_bot = FALSE"]
     if channel_id: p.append(channel_id); f.append(f"channel_id = ${len(p)}")
     if user_id and user_id.isdigit(): p.append(int(user_id)); f.append(f"user_id = ${len(p)}")
     where = " AND ".join(f)
@@ -534,7 +550,7 @@ async def get_monthly_analysis(year: int, month: int, response: Response, channe
 async def get_total_analysis(response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[str] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"ana_t_{channel_id}_{user_id}_{end_date}"
     cached = get_cache(ckey)
-    ttl = 86400 if end_date else 300
+    ttl = 86400 if end_date else LIVE_TOTAL_CACHE_TTL
     response.headers["Cache-Control"] = f"public, max-age={ttl}"
     if cached: return cached
     p = []; f = ["is_bot = FALSE"]
@@ -550,6 +566,33 @@ async def get_total_analysis(response: Response, channel_id: Optional[int] = Que
     res = {"total": count['total'], "max_date": {"date": max_d['d'].strftime("%Y-%m-%d"), "count": max_d['c']} if max_d else None, "max_dow": {"dow": int(max_w['dow']), "count": max_w['c']} if max_w else None, "max_hour": {"hour": int(max_h['h']), "count": max_h['c']} if max_h else None}
     set_cache(ckey, res, ttl=ttl)
     return res
+
+async def warm_total_cache_once():
+    if not pool:
+        return
+
+    warmers = [
+        ("ranking_total", lambda: get_total_ranking(Response(), channel_id=None, end_date=None)),
+        ("history_total", lambda: get_total_history(Response(), channel_id=None, user_id=None, end_date=None)),
+        ("heatmap_total", lambda: get_total_heatmap(Response(), channel_id=None, end_date=None)),
+        ("channels_total", lambda: get_total_channel_distribution(Response(), end_date=None)),
+        ("analysis_total", lambda: get_total_analysis(Response(), channel_id=None, user_id=None, end_date=None)),
+    ]
+
+    for name, warmer in warmers:
+        started = time.perf_counter()
+        try:
+            await warmer()
+            elapsed_ms = int((time.perf_counter() - started) * 1000)
+            logger.info(f"Warmed cache: {name} ({elapsed_ms}ms)")
+        except Exception:
+            logger.warning(f"Failed to warm cache: {name}", exc_info=True)
+
+async def warm_total_cache_loop():
+    await asyncio.sleep(10)
+    while True:
+        await warm_total_cache_once()
+        await asyncio.sleep(TOTAL_CACHE_WARM_INTERVAL)
 
 @app.get("/api/debug/db")
 async def debug_db():

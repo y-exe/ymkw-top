@@ -15,3 +15,5 @@
 **/ymkw_api_diskcache_v*
 backend/test_db.py
 build_log.txt
+
+db/backups/*.sql
