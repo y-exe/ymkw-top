@@ -15,7 +15,7 @@ import { fetchAPI } from "@/lib/api";
 const { url } = Astro;
 const channelId = url.searchParams.get("channel");
 
-let channelName = "All Channels";
+let channelName = "すべてのチャンネル";
 if (channelId) {
   try {
     const res = await fetchAPI("/api/channels");
@@ -35,7 +35,7 @@ const userName = userNameRaw ? decodeURIComponent(userNameRaw) : null;
 const userAvatar = Astro.cookies.get("user_avatar")?.value;
 
 const parts = url.pathname.split("/").filter(Boolean);
-const mode = parts[0] === "open" ? "Overview" : "Monthly";
+const mode = parts[0] === "open" ? "履歴" : "月間";
 const year = parts[1];
 const month = parts[2];
 ---
@@ -47,7 +47,7 @@ const month = parts[2];
     <BreadcrumbList>
       <BreadcrumbItem>
         <BreadcrumbLink href="/" className="flex items-center gap-1.5"
-          ><Home className="w-4 h-4" />Home</BreadcrumbLink
+          ><Home className="w-4 h-4" />ホーム</BreadcrumbLink
         >
       </BreadcrumbItem>
       <BreadcrumbSeparator />
@@ -115,7 +115,7 @@ const month = parts[2];
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
               <span class="text-[10px] text-green-600 font-bold uppercase tracking-wider">
-                Online
+                オンライン
               </span>
             </div>
           </div>

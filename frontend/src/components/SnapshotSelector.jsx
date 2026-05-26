@@ -13,11 +13,11 @@ export default function SnapshotSelector({ snapshots = [], currentId }) {
   const currentSnap = snapshots.find(s => String(s.snapshot_id) === String(currentId));
   const currentLabel = currentSnap
     ? `#${currentSnap.snapshot_id} - ${new Date(currentSnap.created_at).toLocaleDateString()}`
-    : 'Select Snapshot';
+    : 'スナップショットを選択';
 
   return (
     <div className="relative">
-      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block px-2">History Snapshots</label>
+      <label className="text-[11px] font-bold text-muted-foreground tracking-wider mb-2 block px-2">履歴スナップショット</label>
       <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-background border border-border text-foreground text-sm rounded-xl p-3 flex items-center justify-between hover:border-primary/50 transition-all shadow-sm focus:ring-2 focus:ring-ring outline-none">
         <div className="flex items-center gap-2 overflow-hidden"><History className="w-4 h-4 text-muted-foreground flex-shrink-0" /><span className="font-medium truncate">{currentLabel}</span></div>
         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
@@ -31,7 +31,7 @@ export default function SnapshotSelector({ snapshots = [], currentId }) {
               const dateStr = new Date(s.created_at).toLocaleString();
               return (
                 <button key={s.snapshot_id} onClick={() => handleSelect(s.snapshot_id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex flex-col group ${isSelected ? 'bg-muted' : 'hover:bg-muted/50'}`}>
-                  <span className={`font-bold ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>Snapshot #{s.snapshot_id}</span>
+                  <span className={`font-bold ${isSelected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}>スナップショット #{s.snapshot_id}</span>
                   <span className="text-[10px] text-muted-foreground/70">{dateStr}</span>
                 </button>
               );

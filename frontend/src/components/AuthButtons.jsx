@@ -75,7 +75,7 @@ export function LogoutButton({ className = "" }) {
                                 exit={{ opacity: 0, y: -4 }}
                                 transition={{ duration: 0.15 }}
                             >
-                                {isExpanded ? "Confirm" : "Log out"}
+                                {isExpanded ? "確認" : "ログアウト"}
                             </motion.span>
                         </AnimatePresence>
                     </button>
@@ -95,7 +95,7 @@ export function LogoutButton({ className = "" }) {
                             <button
                                 className="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-border bg-background text-foreground hover:bg-muted cursor-pointer transition-shadow"
                                 onClick={handleCancel}
-                                aria-label="Cancel"
+                                aria-label="キャンセル"
                             >
                                 <X className="h-3.5 w-3.5" />
                             </button>
@@ -126,7 +126,7 @@ export function LoginButton({ className = "" }) {
                     onClick={handleLogin}
                 >
                     <LogIn className="h-3.5 w-3.5 mr-2" />
-                    Login
+                    ログイン
                 </button>
             </motion.div>
         </MotionConfig>

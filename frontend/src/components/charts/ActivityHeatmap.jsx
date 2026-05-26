@@ -1,6 +1,6 @@
 import React from 'react';
 
-const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const days = ['日', '月', '火', '水', '木', '金', '土'];
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
 export default function ActivityHeatmap({ data }) {
@@ -40,17 +40,16 @@ export default function ActivityHeatmap({ data }) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm text-slate-900 dark:text-slate-100 [--heatmap-color:0,0,0] dark:[--heatmap-color:255,255,255]">
+    <div className="rounded-2xl bg-white p-6 text-slate-900 dark:text-slate-100 [--heatmap-color:0,0,0] dark:[--heatmap-color:255,255,255]">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-          Activity Heatmap
+          アクティビティヒートマップ
         </h3>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div>
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Top 5 Peaks</span>
+            <span className="text-[10px] font-black text-muted-foreground tracking-wider">ピーク上位5件</span>
           </div>
-          <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded tracking-widest">JST</span>
         </div>
       </div>
 
@@ -97,7 +96,7 @@ export default function ActivityHeatmap({ data }) {
                           </div>
                           <div className="flex items-baseline gap-1.5">
                             <span className="text-sm font-black text-white">{count.toLocaleString()}</span>
-                            <span className={`text-[10px] ${isTop5 ? 'text-white/70' : 'text-slate-400'} font-bold uppercase tracking-tight`}>messages</span>
+                            <span className={`text-[10px] ${isTop5 ? 'text-white/70' : 'text-slate-400'} font-bold tracking-tight`}>件</span>
                           </div>
 
                           <div className={`

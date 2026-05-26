@@ -16,12 +16,12 @@ Astro.response.headers.set(
   "public, s-maxage=86400, max-age=3600",
 );
 
-const pageTitle = `Snapshot #${snapshot_id}`;
+const pageTitle = `スナップショット #${snapshot_id}`;
 const pageDescription = `やまかわてるき鯖の全期間統計スナップショット #${snapshot_id} の詳細データ。過去の活動履歴、累計ランキング、ユーザー別統計を確認できます。`;
 
 const breadcrumbs = [
-  { name: "Top", item: "https://www.ymkw.top/" },
-  { name: "Snapshots", item: "https://www.ymkw.top/" },
+  { name: "トップ", item: "https://www.ymkw.top/" },
+  { name: "スナップショット", item: "https://www.ymkw.top/" },
   { name: `#${snapshot_id}`, item: `https://www.ymkw.top/open/${snapshot_id}` },
 ];
 ---

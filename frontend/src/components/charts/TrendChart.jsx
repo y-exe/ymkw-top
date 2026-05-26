@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Search, User, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, User } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchAPI } from '@/lib/api';
 
 const CustomTooltip = ({ active, payload, label, users, highlightUserId, focusedUserId }) => {
@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label, users, highlightUserId, focused
                     {showList.map((p) => {
                         const uid = p.dataKey;
                         const userInfo = users ? (users[uid] || {}) : {};
-                        const name = p.name === 'total' ? 'Server Total' : (userInfo.name || uid);
+                        const name = p.name === 'total' ? '全体合計' : (userInfo.name || uid);
                         const avatar = userInfo.avatar;
                         const isMe = String(uid) === String(highlightUserId);
                         const isFocus = String(uid) === String(focusedUserId);
@@ -51,7 +51,7 @@ const TotalTooltip = ({ active, payload, label }) => {
                 <p className="text-[10px] text-muted-foreground font-black mb-2 uppercase tracking-widest">{label}</p>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-primary"></div>
-                    <span className="text-xs font-bold text-muted-foreground">Total</span>
+                    <span className="text-xs font-bold text-muted-foreground">合計</span>
                     <span className="font-mono font-black text-foreground text-sm ml-auto">{payload[0].value.toLocaleString()}</span>
                 </div>
             </div>
@@ -87,7 +87,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
     }, [searchTerm]);
 
     if (!apiData || !apiData.chart_data || apiData.chart_data.length === 0) {
-        return <div className="w-full h-[400px] bg-muted rounded-2xl border border-dashed border-border flex items-center justify-center text-muted-foreground font-black uppercase tracking-widest text-xs">No activity data found</div>;
+        return <div className="w-full h-[400px] bg-muted rounded-2xl border border-dashed border-border flex items-center justify-center text-muted-foreground font-black tracking-widest text-xs">アクティビティデータがありません</div>;
     }
 
     const { chart_data: rawChartData, users, top_user_id } = apiData;
@@ -121,32 +121,24 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                     <div className="space-y-1">
                         <CardTitle className="text-xl font-black tracking-tight flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-primary" />
-                            Activity Trends
+                            アクティビティ推移
                         </CardTitle>
-                        <CardDescription className="text-xs font-bold uppercase tracking-widest">
-                            Daily message volume (Top 100 + Focus)
-                        </CardDescription>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="bg-muted p-1.5 rounded-xl flex text-[10px] font-black uppercase tracking-widest shadow-inner border border-border">
-                            <button onClick={() => setMode('individual')} className={`px-5 py-2 rounded-lg transition-all ${mode === 'individual' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>Individual</button>
-                            <button onClick={() => setMode('total')} className={`px-5 py-2 rounded-lg transition-all ${mode === 'total' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>Total</button>
-                        </div>
                         {mode === 'individual' && (
                             <div className="relative">
-                                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#545454]" />
                                 <input
                                     type="text"
-                                    placeholder="Add User to Graph..."
-                                    className="pl-11 pr-4 py-3 bg-muted border border-border focus:bg-background focus:ring-4 focus:ring-primary/10 rounded-xl text-xs font-bold w-48 outline-none transition-all shadow-sm text-foreground placeholder:text-muted-foreground"
+                                    placeholder="ユーザーを追加..."
+                                    className="w-48 rounded-xl border-0 bg-white py-3 pl-11 pr-4 text-xs font-bold text-[#545454] outline-none transition-colors placeholder:text-[#545454]/55 focus:bg-white"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                                 {searchResults.length > 0 && (
-                                    <div className="absolute top-full right-0 mt-2 w-64 bg-popover border border-border rounded-xl shadow-2xl z-[110] overflow-hidden text-popover-foreground">
+                                    <div className="absolute top-full right-0 z-[110] mt-2 w-64 overflow-hidden rounded-xl border-0 bg-white text-[#545454]">
                                         {searchResults.map(u => (
-                                            <button key={u.user_id} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-3 p-3 hover:bg-muted text-left border-b border-border last:border-0 transition-colors">
+                                            <button key={u.user_id} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-3 p-3 hover:bg-[#f8f8f8] text-left border-b border-[#f1f1f1] last:border-0 transition-colors">
                                                 {u.avatar ? <img src={u.avatar} className="w-8 h-8 rounded-full" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><User className="w-4 h-4 text-muted-foreground" /></div>}
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-xs font-black text-foreground truncate">{u.display_name}</p>
@@ -158,12 +150,16 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                 )}
                             </div>
                         )}
+                        <div className="flex rounded-xl bg-white p-1.5 text-[10px] font-black uppercase tracking-widest">
+                            <button onClick={() => setMode('individual')} className={`px-5 py-2 rounded-lg transition-colors ${mode === 'individual' ? 'bg-[#545454] text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>ユーザー別</button>
+                            <button onClick={() => setMode('total')} className={`px-5 py-2 rounded-lg transition-colors ${mode === 'total' ? 'bg-[#545454] text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>合計</button>
+                        </div>
                     </div>
                 </div>
             </CardHeader>
 
             <CardContent className="pt-0">
-                <div ref={containerRef} style={{ width: '100%', height: '400px' }}>
+                <div ref={containerRef} className="rounded-2xl bg-white p-4" style={{ width: '100%', height: '400px' }}>
                     {shouldRender && (
                         <ResponsiveContainer width="100%" height="100%">
                             {mode === 'individual' ? (
@@ -261,11 +257,11 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                 </div>
 
                 {/* Legend */}
-                <div className="mt-8 pt-6 border-t border-border flex flex-wrap gap-x-8 gap-y-4 justify-center">
-                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-red-500"></div><span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">You (自分)</span></div>
-                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-blue-500"></div><span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Focused</span></div>
-                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-foreground"></div><span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Rank 1st User</span></div>
-                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-muted-foreground/40"></div><span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Top 100 Others</span></div>
+                <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4 justify-center">
+                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-red-500"></div><span className="text-[10px] font-black text-muted-foreground tracking-widest">自分</span></div>
+                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-blue-500"></div><span className="text-[10px] font-black text-muted-foreground tracking-widest">選択中</span></div>
+                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-foreground"></div><span className="text-[10px] font-black text-muted-foreground tracking-widest">1位のユーザー</span></div>
+                    <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-muted-foreground/40"></div><span className="text-[10px] font-black text-muted-foreground tracking-widest">その他上位100人</span></div>
                 </div>
             </CardContent>
         </Card>

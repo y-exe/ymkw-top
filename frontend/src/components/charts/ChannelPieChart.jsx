@@ -28,7 +28,7 @@ export default function ChannelPieChart({ data }) {
           <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">{d.name}</p>
           <div className="flex items-baseline gap-1.5">
             <span className="text-xs font-black text-popover-foreground">{d.value.toLocaleString()}</span>
-            <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight">msgs</span>
+            <span className="text-[9px] text-muted-foreground font-bold tracking-tight">件</span>
           </div>
           <p className="text-[9px] text-primary font-black mt-0.5">{((d.value / total) * 100).toFixed(1)}%</p>
         </div>
@@ -38,10 +38,9 @@ export default function ChannelPieChart({ data }) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 shadow-sm h-full flex flex-col overflow-hidden">
+    <div className="rounded-2xl bg-white p-5 h-full flex flex-col overflow-hidden">
       <div className="w-full mb-3 flex-shrink-0">
-        <h3 className="text-base font-bold text-foreground leading-none">Channel Distribution</h3>
-        <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-50">Activity Share</p>
+        <h3 className="text-base font-bold text-foreground leading-none">チャンネル分布</h3>
       </div>
 
       <div className="flex-1 flex flex-row items-center gap-4 min-h-0 min-w-0">
@@ -80,7 +79,7 @@ export default function ChannelPieChart({ data }) {
               </ResponsiveContainer>
 
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-tighter leading-none mb-0.5 opacity-40">Total</span>
+                <span className="text-[8px] font-black text-muted-foreground tracking-tighter leading-none mb-0.5 opacity-40">合計</span>
                 <span className="text-sm font-black text-foreground leading-none">{total.toLocaleString()}</span>
               </div>
             </div>
@@ -88,7 +87,6 @@ export default function ChannelPieChart({ data }) {
         </div>
 
         <div className="flex-1 flex flex-col gap-1 justify-center min-w-0 pr-1 overflow-hidden h-full">
-          <p className="text-[8px] font-black text-muted-foreground/30 uppercase tracking-[0.2em] mb-1 border-b border-border/50 pb-0.5">Top Channels</p>
           {data.slice(0, 8).map((d, i) => (
             <div key={d.name} className="flex items-center gap-2 min-w-0 group cursor-default py-0.5">
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>

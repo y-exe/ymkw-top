@@ -10,8 +10,8 @@ export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
     const share = ((totalMsgs / (prevOverall?.total || 1)) * 100).toFixed(1);
     const avgMsgs = uniqueUsers > 0 ? (totalMsgs / uniqueUsers).toFixed(1) : 0;
 
-    const intensity = parseFloat(avgMsgs) > 30 ? "High Activity" : parseFloat(avgMsgs) > 10 ? "Steady" : "Calm";
-    const intensityColor = intensity === "High Activity" ? "bg-orange-500" : intensity === "Steady" ? "bg-blue-500" : "bg-slate-400";
+    const intensity = parseFloat(avgMsgs) > 30 ? "高アクティブ" : parseFloat(avgMsgs) > 10 ? "安定" : "穏やか";
+    const intensityColor = intensity === "高アクティブ" ? "bg-orange-500" : intensity === "安定" ? "bg-blue-500" : "bg-slate-400";
 
     return (
         <Card className="h-full border-border bg-card flex flex-col overflow-hidden">
@@ -22,8 +22,8 @@ export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
                             <Hash className="w-4 h-4" />
                         </div>
                         <div>
-                            <CardTitle className="text-lg font-black leading-none">Channel Context</CardTitle>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-wider opacity-60">Inner Metrics</p>
+                            <CardTitle className="text-lg font-black leading-none">チャンネル分析</CardTitle>
+                            <p className="text-[10px] font-bold text-muted-foreground mt-1 tracking-wider opacity-60">内部指標</p>
                         </div>
                     </div>
                 </div>
@@ -33,18 +33,18 @@ export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                            <Users className="w-3 h-3" /> Contributors
+                            <Users className="w-3 h-3" /> 参加ユーザー
                         </p>
                         <p className="text-2xl font-black text-foreground">{uniqueUsers.toLocaleString()}</p>
-                        <p className="text-[9px] text-muted-foreground font-medium">active users this month</p>
+                        <p className="text-[9px] text-muted-foreground font-medium">今月のアクティブユーザー</p>
                     </div>
 
                     <div className="space-y-1 text-right">
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 justify-end">
-                            Share Rate <BarChart3 className="w-3 h-3" />
+                            比率 <BarChart3 className="w-3 h-3" />
                         </p>
                         <p className="text-2xl font-black text-primary">{share}%</p>
-                        <p className="text-[9px] text-muted-foreground font-medium">of server messages</p>
+                        <p className="text-[9px] text-muted-foreground font-medium">全体メッセージ内</p>
                     </div>
                 </div>
 
@@ -54,7 +54,7 @@ export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-xs font-bold text-foreground">Avg Heat (msgs/user)</span>
+                            <span className="text-xs font-bold text-foreground">平均熱量（件/人）</span>
                         </div>
                         <span className="text-sm font-black text-foreground">{avgMsgs}</span>
                     </div>
@@ -67,12 +67,12 @@ export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground/60 uppercase">
-                        <span>Low Heat</span>
+                        <span>低め</span>
                         <div className="flex items-center gap-1 text-primary">
                             <Zap className="w-3 h-3 fill-current" />
                             <span className="font-black text-primary">{intensity}</span>
                         </div>
-                        <span>Fire</span>
+                        <span>高め</span>
                     </div>
                 </div>
             </CardContent>

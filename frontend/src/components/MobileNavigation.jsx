@@ -107,7 +107,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsLogoutModalOpen(false)} />
                     <div className="relative bg-white w-full max-w-[280px] rounded-[2rem] shadow-2xl overflow-hidden p-8 text-center animate-slide-up">
                         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><AlertCircle className="w-8 h-8" /></div>
-                        <h3 className="text-lg font-black text-gray-900 mb-2 font-outfit">Logout?</h3>
+                        <h3 className="text-lg font-black text-gray-900 mb-2 font-outfit">ログアウトしますか？</h3>
                         <p className="text-xs text-gray-500 mb-8 leading-relaxed">アカウントからログアウトします。</p>
                         <div className="flex flex-col gap-3">
                             <button onClick={handleResetAuth} className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-200 active:scale-95 transition-all">ログアウト</button>
@@ -123,8 +123,8 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                     <div className="absolute top-24 left-4 right-4 bottom-8 bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-slide-up">
                         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                             <div className="bg-gray-100 p-1 rounded-2xl flex mb-8 text-[10px] font-black uppercase tracking-widest border border-gray-200">
-                                <a href={monthlyBaseUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'month' ? 'bg-white shadow-sm text-black' : 'text-gray-400'}`}>Monthly</a>
-                                <a href={allTimeUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'open' ? 'bg-white shadow-sm text-black' : 'text-gray-400'}`}>All Time</a>
+                                <a href={monthlyBaseUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'month' ? 'bg-white shadow-sm text-black' : 'text-gray-400'}`}>月間</a>
+                                <a href={allTimeUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'open' ? 'bg-white shadow-sm text-black' : 'text-gray-400'}`}>累計</a>
                             </div>
 
                             <div className="space-y-6">
@@ -133,7 +133,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
 
                                 <nav className="space-y-6 pt-4 text-left">
                                     <a href={dashboardBasePath} onClick={() => setIsOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold text-sm border transition-all ${isDashboard && !currentChannelId ? 'bg-gray-900 text-white border-gray-900 shadow-xl shadow-gray-200' : 'bg-gray-50 text-gray-500 border-transparent'}`}>
-                                        <LayoutGrid className="w-5 h-5" /> Overview (総合)
+                                        <LayoutGrid className="w-5 h-5" /> 総合
                                     </a>
                                     {categories.map(cat => (
                                         <div key={cat} className="space-y-2">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trophy } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -27,23 +27,20 @@ export default function RankingList({ data, highlightUserId }) {
     };
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5 text-yellow-500" />
-                <h3 className="text-base font-bold text-foreground">Ranking</h3>
+        <Card className="flex h-full flex-col overflow-hidden !border-[4px] !border-white/35 !bg-[#111F35] !text-white !shadow-[0_18px_44px_rgba(17,31,53,0.45),0_0_0_1px_rgba(255,255,255,0.14)]">
+            <div className="flex items-center gap-2 border-b-2 border-white/15 px-5 py-4">
+                <h3 className="text-base font-bold text-white">ランキング</h3>
             </div>
 
-            {/* Top 3 Cards */}
-            <div className="flex flex-col gap-3 mb-4 flex-shrink-0">
-                {top1 && <RankCard user={top1} rank={1} isHighlight={String(top1.user_id) === String(highlightUserId)} />}
-                <div className="grid grid-cols-2 gap-2">
-                    {top2 && <RankCard user={top2} rank={2} isHighlight={String(top2.user_id) === String(highlightUserId)} compact />}
-                    {top3 && <RankCard user={top3} rank={3} isHighlight={String(top3.user_id) === String(highlightUserId)} compact />}
+            <div className="flex-shrink-0 border-b-2 border-white/15">
+                {top1 && <TopRankRow user={top1} rank={1} isHighlight={String(top1.user_id) === String(highlightUserId)} />}
+                <div className="grid grid-cols-2 border-t-2 border-white/15">
+                    {top2 && <TopRankRow user={top2} rank={2} isHighlight={String(top2.user_id) === String(highlightUserId)} compact />}
+                    {top3 && <TopRankRow user={top3} rank={3} isHighlight={String(top3.user_id) === String(highlightUserId)} compact />}
                 </div>
             </div>
 
-            {/* 4th - 15th List */}
-            <Card className="overflow-hidden flex flex-col border-border bg-card shadow-sm">
+            <div className="overflow-hidden flex flex-col">
                 <div className="flex-1">
                     {listItems.map((user, i) => (
                         <RankRow key={user.user_id} user={user} rank={i + 4} isMe={String(user.user_id) === String(highlightUserId)} />
@@ -53,19 +50,18 @@ export default function RankingList({ data, highlightUserId }) {
                 {hiddenItems.length > 0 && (
                     <button
                         onClick={openModal}
-                        className="w-full py-3 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border bg-muted/20"
+                        className="w-full border-t-2 border-white/15 bg-white/5 py-3 text-xs font-bold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                     >
                         さらに表示 ({hiddenItems.length}件)
                     </button>
                 )}
-            </Card>
+            </div>
 
-            {/* Modal */}
             {isModalOpen && createPortal(
                 <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in" onClick={closeModal}>
-                    <Card className="w-full max-w-lg h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 bg-card" onClick={e => e.stopPropagation()}>
+                    <Card className="w-full max-w-lg h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
                         <CardHeader className="p-4 border-b border-border flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-lg">Full Ranking</CardTitle>
+                            <CardTitle className="text-lg">ランキング一覧</CardTitle>
                             <button onClick={closeModal} className="p-2 hover:bg-accent rounded-full transition-colors"><X className="w-4 h-4 text-muted-foreground" /></button>
                         </CardHeader>
                         <CardContent className="flex-1 overflow-y-auto p-0 custom-scrollbar">
@@ -77,27 +73,27 @@ export default function RankingList({ data, highlightUserId }) {
                 </div>,
                 document.body
             )}
-        </div>
+        </Card>
     );
 }
 
 function RankRow({ user, rank, isMe }) {
     return (
-        <div className={`flex items-center p-3 border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors ${isMe ? 'bg-primary/5 hover:bg-primary/10' : ''}`}>
-            <span className={`w-8 text-center font-mono font-bold text-sm ${rank <= 3 ? 'text-yellow-500' : 'text-muted-foreground'}`}>{rank}</span>
+        <div className={`flex items-center p-3 border-b-2 border-white/15 last:border-0 transition-colors hover:bg-white/[0.08] ${isMe ? 'bg-[#D02752]/20 hover:bg-[#D02752]/25' : ''}`}>
+            <span className={`w-8 text-center font-mono font-bold text-sm ${rank <= 3 ? 'text-yellow-400' : 'text-white/45'}`}>{rank}</span>
             <Avatar className="w-8 h-8 mx-3">
                 <AvatarImage src={user.avatar} className="object-cover" />
-                <AvatarFallback className="text-xs bg-muted text-muted-foreground">{user.display_name?.charAt(0) || '?'}</AvatarFallback>
+                <AvatarFallback className="text-xs bg-white/10 text-white/70">{user.display_name?.charAt(0) || '?'}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-                <p className={`font-bold text-xs truncate ${isMe ? 'text-primary' : 'text-foreground'}`}>{user.display_name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">@{user.username}</p>
+                <p className={`font-bold text-xs truncate ${isMe ? 'text-[#ff6f91]' : 'text-white'}`}>{user.display_name}</p>
+                <p className="text-[10px] text-white/40 truncate">@{user.username}</p>
             </div>
             <div className="text-right">
-                <p className="font-mono font-bold text-foreground text-sm">{user.count.toLocaleString()}</p>
+                <p className="font-mono font-bold text-white text-sm">{user.count.toLocaleString()}</p>
                 {user.char_count > 0 && (
-                    <p className="text-[9px] text-muted-foreground font-mono">
-                        avg {Math.round(user.char_count / user.count)}
+                    <p className="text-[9px] text-white/40 font-mono">
+                        平均 {Math.round(user.char_count / user.count)}
                     </p>
                 )}
             </div>
@@ -105,32 +101,56 @@ function RankRow({ user, rank, isMe }) {
     );
 }
 
-function RankCard({ user, rank, isHighlight, compact = false }) {
-    const heightClass = compact ? "h-auto p-4" : "h-auto p-6";
-    const imgSize = compact ? "w-10 h-10" : "w-16 h-16";
+function TopRankRow({ user, rank, isHighlight, compact = false }) {
+    const rankColor = rank === 1 ? 'text-yellow-400' : rank === 2 ? 'text-slate-300' : 'text-orange-300';
+    const avatarSize = rank === 1 ? 'w-16 h-16' : 'w-14 h-14';
+    const countSize = rank === 1 ? 'text-2xl' : 'text-xl';
 
-    return (
-        <Card className={`relative flex flex-col items-center shadow-sm overflow-hidden bg-card ${isHighlight ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
-            <CardContent className={`w-full flex flex-col items-center ${heightClass} p-0`}>
-                <div className={`absolute top-2 right-3 font-mono font-bold ${compact ? 'text-sm' : 'text-xl'} ${rank === 1 ? 'text-yellow-500' : rank === 2 ? 'text-slate-400' : 'text-orange-400'}`}>
-                    {rank}
-                </div>
-
-                <div className={`mb-3 ${compact ? 'mt-2' : 'mt-4'}`}>
-                    <Avatar className={`${imgSize} border-2 shadow-sm ${isHighlight ? 'border-primary/50' : 'border-background'}`}>
+    if (rank === 1) {
+        return (
+            <div className={`relative overflow-hidden border-b-2 border-white/15 px-5 py-5 text-center ${isHighlight ? 'bg-[#D02752]/18' : 'bg-white/[0.035]'}`}>
+                <div className="absolute right-5 top-4 font-mono text-3xl font-black text-yellow-400/90">1</div>
+                <div className="mx-auto mb-3 w-fit">
+                    <Avatar className={avatarSize}>
                         <AvatarImage src={user.avatar} className="object-cover" />
-                        <AvatarFallback className="bg-muted text-muted-foreground">{user.display_name?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-white/10 text-white/70">{user.display_name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </div>
-
-                <h3 className={`font-bold text-center truncate w-full px-2 text-xs ${isHighlight ? 'text-primary' : 'text-foreground'}`}>{user.display_name}</h3>
-                {!compact && <p className="text-[10px] text-muted-foreground mb-4">@{user.username}</p>}
-
-                <div className={`bg-muted/50 text-center w-full ${compact ? 'mt-2 py-1.5' : 'mt-auto py-2.5 border-t border-border/50'}`}>
-                    <span className={`block font-mono font-bold text-foreground ${compact ? 'text-sm' : 'text-lg'}`}>{user.count.toLocaleString()}</span>
-                    {!compact && <span className="text-[9px] text-muted-foreground uppercase tracking-wider block mt-0.5">Messages</span>}
+                <h3 className={`mx-auto max-w-full truncate px-8 text-base font-black ${isHighlight ? 'text-[#ff8aa5]' : 'text-white'}`}>
+                    {user.display_name}
+                </h3>
+                <p className="mb-4 truncate text-[11px] text-white/45">@{user.username}</p>
+                <div className="border-t-2 border-white/15 py-3">
+                    <span className={`block font-mono font-black leading-none text-white ${countSize}`}>{user.count.toLocaleString()}</span>
+                    <span className="mt-1 block text-[10px] font-bold tracking-wider text-white/45">メッセージ</span>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        );
+    }
+
+    return (
+        <div className={`relative flex min-h-[150px] flex-col items-center justify-between px-4 py-5 text-center transition-colors hover:bg-white/[0.06] ${rank === 2 ? 'border-r-2 border-white/15' : ''} ${isHighlight ? 'bg-[#D02752]/18' : 'bg-white/[0.025]'}`}>
+            <div className={`absolute right-3 top-3 font-mono text-xl font-black ${rankColor} opacity-90`}>
+                {rank}
+            </div>
+            <div className="rounded-full">
+                <Avatar className={compact ? 'w-12 h-12' : avatarSize}>
+                    <AvatarImage src={user.avatar} className="object-cover" />
+                    <AvatarFallback className="bg-white/10 text-white/70">{user.display_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+            </div>
+            <div className="min-w-0 w-full">
+                <h3 className={`truncate text-xs font-black ${isHighlight ? 'text-[#ff8aa5]' : 'text-white'}`}>
+                    {user.display_name}
+                </h3>
+                <p className="truncate text-[10px] text-white/45">@{user.username}</p>
+            </div>
+            <div className="mt-2 w-full border-t-2 border-white/15 pt-3">
+                <span className={`block font-mono font-black text-white ${compact ? 'text-lg' : countSize}`}>{user.count.toLocaleString()}</span>
+                <div className="text-[9px] font-bold text-white/45">
+                    メッセージ
+                </div>
+            </div>
+        </div>
     );
 }

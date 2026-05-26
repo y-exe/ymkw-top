@@ -55,8 +55,8 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
     return (
         <div className="px-6 pb-12 space-y-8 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
             <div className="bg-muted p-1.5 rounded-2xl flex text-[10px] font-black uppercase tracking-widest border border-border shadow-inner">
-                <a href={monthlyBaseUrl} className={`flex-1 py-2.5 text-center rounded-xl transition-all ${pageMode === 'month' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>Monthly</a>
-                <a href={allTimeUrl} className={`flex-1 py-2.5 text-center rounded-xl transition-all ${pageMode === 'open' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>All Time</a>
+                <a href={monthlyBaseUrl} className={`flex-1 py-2.5 text-center rounded-xl transition-all ${pageMode === 'month' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>月間</a>
+                <a href={allTimeUrl} className={`flex-1 py-2.5 text-center rounded-xl transition-all ${pageMode === 'open' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>累計</a>
             </div>
 
             {pageMode === 'month' && <MonthSelector currentYear={currentId} currentMonth={currentMonth} />}
@@ -64,7 +64,7 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
 
             <nav className="space-y-8">
                 <a href={dashboardBasePath} className={`flex items-center gap-3 px-4 py-3 text-sm rounded-2xl font-black transition-all border shadow-sm ${isDashboard && !channelId ? 'bg-primary text-primary-foreground border-primary shadow-primary/20' : 'bg-transparent text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'}`}>
-                    <LayoutGrid className="w-4 h-4" /> Overview
+                    <LayoutGrid className="w-4 h-4" /> 総合
                 </a>
 
                 {categories.map(cat => (

@@ -25,7 +25,6 @@ export default function GrowthComparison({ current, previous }) {
                                 {isPositive ? '+' : ''}{growth.toFixed(1)}%
                             </Badge>
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Growth Comparison</p>
                     </div>
                 </div>
             </CardHeader>
@@ -70,7 +69,7 @@ export default function GrowthComparison({ current, previous }) {
                                 <Clock className="w-4 h-4 text-orange-500" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase">Peak Hour</p>
+                                <p className="text-[10px] font-bold text-muted-foreground">ピーク時間</p>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-bold opacity-50">{previous.max_hour?.hour}:00</span>
                                     <ArrowRight className="w-3 h-3 text-muted-foreground/30" />
@@ -86,7 +85,7 @@ export default function GrowthComparison({ current, previous }) {
                                 <Calendar className="w-4 h-4 text-green-500" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase">Best Date</p>
+                                <p className="text-[10px] font-bold text-muted-foreground">最多日</p>
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-bold opacity-50">{previous.max_date?.date.split('-')[2]}日</span>
                                     <ArrowRight className="w-3 h-3 text-muted-foreground/30" />

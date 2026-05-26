@@ -30,7 +30,7 @@ const queryParams = Astro.url.search;
 const channelId = Astro.url.searchParams.get("channel");
 
 const parts = currentPath.split("/").filter(Boolean);
-const mode = parts[0] === "open" ? "Overview" : "Monthly";
+const mode = parts[0] === "open" ? "履歴" : "月間";
 const year = parts[1];
 const month = parts[2];
 const isDashboard =
@@ -168,7 +168,13 @@ if (breadcrumbs.length > 0) {
             <div class="flex-1 min-w-0 md:ml-80 flex flex-col transition-all mobile-content-pt relative">
               <Header />
 
-              <main class="px-4 md:px-8 lg:p-12 flex-1 pb-32">
+              <main
+                class={
+                  isDashboard
+                    ? "px-4 md:px-8 lg:px-12 lg:pt-12 lg:pb-0 flex-1 bg-white"
+                    : "px-4 md:px-8 lg:p-12 flex-1 pb-32"
+                }
+              >
                 {isDashboard && (
                   <div class="md:hidden mb-6 flex items-center justify-center text-[10px] font-bold text-muted-foreground bg-background/90 py-3 px-5 rounded-2xl border border-border shadow-sm backdrop-blur-lg mx-auto w-fit">
                     <span class="text-foreground uppercase tracking-widest">

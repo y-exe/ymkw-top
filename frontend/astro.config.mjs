@@ -13,6 +13,13 @@ export default defineConfig({
   vite: {
     server: {
       allowedHosts: ['ymkw.top'],
+      proxy: {
+        '/api': {
+          target: 'https://api.ymkw.top',
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
   },
 });

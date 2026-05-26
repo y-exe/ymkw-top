@@ -1,4 +1,4 @@
-const API_URL = "https://api.ymkw.top";
+const API_URL = import.meta.env.DEV ? "" : "https://api.ymkw.top";
 
 interface FetchAPIOptions extends Omit<RequestInit, 'signal'> {
     timeout?: number;

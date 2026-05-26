@@ -84,11 +84,11 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
     if (!snapshotInfo || !data) return <div className="min-h-[80vh]"></div>;
 
     return (
-        <MouseEffectCard className="min-h-screen">
+        <MouseEffectCard className="min-h-screen pb-32">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
                 <PageHeader
                     title={snapshotInfo.title}
-                    subTitle="History Snapshot"
+                    subTitle="履歴スナップショット"
                 />
 
                 <div className="flex flex-col lg:flex-row gap-8">
@@ -107,7 +107,7 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <Card className="grid grid-cols-1 gap-4 rounded-2xl !bg-[#f8f8f8] p-4 xl:grid-cols-3">
                             <div className="xl:col-span-2 w-full min-w-0">
                                 <ActivityHeatmap data={data.heatmap} />
                             </div>
@@ -117,12 +117,12 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                                 ) : (
                                     <Card className="h-full min-h-[300px] flex items-center justify-center p-6">
                                         <div className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-center">
-                                            AI Summary Coming Soon
+                                            AI要約は準備中です
                                         </div>
                                     </Card>
                                 )}
                             </div>
-                        </div>
+                        </Card>
                     </div>
 
                     <div className="w-full lg:w-[320px] xl:w-[380px] flex-shrink-0">

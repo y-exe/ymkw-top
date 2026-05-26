@@ -4,38 +4,51 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function StatsCard({ myData, topUserCount }) {
   if (!myData) return null;
+
   const percentage = topUserCount > 0 ? Math.round((myData.count / topUserCount) * 100) : 0;
 
   return (
-    <Card className="mb-6 overflow-hidden border-border bg-card shadow-sm">
-      <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <Avatar className="w-14 h-14 border-2 border-primary/20 ring-2 ring-primary/10 ring-offset-2 ring-offset-background">
+    <Card className="mb-6 overflow-hidden !border-0 !bg-[#f8f8f8] !shadow-none">
+      <CardContent className="flex flex-col items-stretch justify-between gap-6 p-5 md:flex-row md:items-center md:p-6">
+        <div className="flex w-full items-center gap-4 rounded-2xl bg-white px-5 py-4 md:w-auto md:min-w-[300px]">
+          <Avatar className="h-14 w-14">
             {myData.avatar && <AvatarImage src={myData.avatar} alt="Avatar" />}
-            <AvatarFallback className="bg-muted text-muted-foreground font-bold">You</AvatarFallback>
+            <AvatarFallback className="bg-[#f8f8f8] font-bold text-[#111F35]">自分</AvatarFallback>
           </Avatar>
-          <div>
-            <p className="text-xs text-primary font-bold uppercase tracking-wider mb-0.5">Your Stats</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-mono font-bold text-foreground">{myData.rank}<span className="text-sm text-muted-foreground ml-1">th</span></span>
-              <span className="text-sm text-muted-foreground font-mono">/ {myData.count.toLocaleString()} msg</span>
+          <div className="min-w-0">
+            <p className="mb-0.5 text-xs font-bold tracking-wider text-[#111F35]">あなたの成績</p>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-mono text-3xl font-bold leading-none text-gray-950">
+                {myData.rank}
+                <span className="ml-1 text-sm text-gray-500">位</span>
+              </span>
+              <span className="font-mono text-sm text-gray-500">
+                / {myData.count.toLocaleString()}件
+              </span>
             </div>
           </div>
         </div>
+
         <div className="w-full md:w-1/2">
-          <div className="flex justify-between text-xs mb-2">
-            <span className="font-bold text-foreground flex items-center gap-2">
-              VS Top User
-              <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-md font-medium">Rank 1</span>
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <span className="flex items-center gap-2 text-base font-black text-black">
+              1位との比較
             </span>
-            <span className="text-primary font-bold font-mono">{percentage}%</span>
+            <span className="rounded-full bg-[#111F35] px-4 py-1.5 font-mono text-2xl font-black leading-none text-white">
+              {percentage}%
+            </span>
           </div>
-          <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
-            <div className="bg-primary h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(percentage, 100)}%` }}></div>
+          <div className="h-5 w-full overflow-hidden rounded-full bg-white">
+            <div
+              className="h-5 rounded-full bg-[#111F35] transition-all duration-1000 ease-out"
+              style={{ width: `${Math.min(percentage, 100)}%` }}
+            />
           </div>
-          <div className="flex justify-between mt-1">
-            <p className="text-[10px] text-muted-foreground font-mono">You</p>
-            <p className="text-[10px] text-muted-foreground font-mono text-right">Top ({topUserCount.toLocaleString()})</p>
+          <div className="mt-2 flex justify-between">
+            <p className="font-mono text-sm font-black text-[#111F35]">自分</p>
+            <p className="text-right font-mono text-sm font-black text-[#111F35]">
+              1位 ({topUserCount.toLocaleString()})
+            </p>
           </div>
         </div>
       </CardContent>

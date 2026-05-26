@@ -86,9 +86,9 @@ export default function Dashboard({ year, month, channelId, userId }) {
     if (!isLoaded || !data) return <div className="min-h-[80vh]"></div>;
 
     return (
-        <MouseEffectCard className="min-h-screen">
+        <MouseEffectCard className="min-h-screen pb-32">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
-                <PageHeader title={`${year}.${month}`} subTitle="Monthly Report" />
+                <PageHeader title={`${year}.${month}`} subTitle="月間レポート" />
 
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="flex-1 min-w-0 space-y-6">
@@ -106,7 +106,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <Card className="grid grid-cols-1 gap-4 rounded-2xl !bg-[#f8f8f8] p-4 xl:grid-cols-3">
                             <div className="xl:col-span-2 w-full min-w-0">
                                 <ActivityHeatmap data={data.heatmap} />
                             </div>
@@ -123,7 +123,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Card>
 
                         <GrowthComparison current={data.overall} previous={data.prevOverall} />
                     </div>
