@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Search, User } from 'lucide-react';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchAPI } from '@/lib/api';
 
@@ -115,6 +116,24 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
         if (onSearchUser) onSearchUser(u.user_id);
     };
 
+    const chartMotion = {
+        initial: {
+            opacity: 0,
+            y: mode === 'individual' ? -14 : 14,
+            clipPath: 'inset(8% 0 8% 0)',
+        },
+        animate: {
+            opacity: 1,
+            y: 0,
+            clipPath: 'inset(0% 0 0% 0)',
+        },
+        exit: {
+            opacity: 0,
+            y: mode === 'individual' ? 14 : -14,
+            clipPath: 'inset(8% 0 8% 0)',
+        },
+    };
+
     return (
         <Card className="w-full shadow-sm">
             <CardHeader className="pb-4">
@@ -125,44 +144,78 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                         </CardTitle>
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
-                        {mode === 'individual' && (
-                            <div className="relative">
-                                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#545454]" />
-                                <input
-                                    type="text"
-                                    placeholder="ユーザーを追加..."
-                                    className="w-48 rounded-xl border-0 bg-white py-3 pl-11 pr-4 text-xs font-bold text-[#545454] outline-none transition-colors placeholder:text-[#545454]/55 focus:bg-white"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                                {searchResults.length > 0 && (
-                                    <div className="absolute top-full right-0 z-[110] mt-2 w-64 overflow-hidden rounded-xl border-0 bg-white text-[#545454]">
-                                        {searchResults.map(u => (
-                                            <button key={u.user_id} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-3 p-3 hover:bg-[#f8f8f8] text-left border-b border-[#f1f1f1] last:border-0 transition-colors">
-                                                {u.avatar ? <img src={u.avatar} className="w-8 h-8 rounded-full" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><User className="w-4 h-4 text-muted-foreground" /></div>}
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-black text-foreground truncate">{u.display_name}</p>
-                                                    <p className="text-[10px] text-muted-foreground font-mono truncate">@{u.username}</p>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
+                        <div className="relative h-[42px] w-48 shrink-0">
+                            <AnimatePresence initial={false}>
+                                {mode === 'individual' && (
+                                    <motion.div
+                                        key="user-search"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                                        className="absolute inset-0"
+                                    >
+                                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#545454]" />
+                                        <input
+                                            type="text"
+                                            placeholder="ユーザーを追加..."
+                                            className="h-full w-48 rounded-xl border-0 bg-white py-3 pl-11 pr-4 text-xs font-bold text-[#545454] outline-none transition-colors placeholder:text-[#545454]/55 focus:bg-white"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                        {searchResults.length > 0 && (
+                                            <div className="absolute top-full right-0 z-[110] mt-2 w-64 overflow-hidden rounded-xl border-0 bg-white text-[#545454]">
+                                                {searchResults.map(u => (
+                                                    <button key={u.user_id} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-3 p-3 hover:bg-[#f8f8f8] text-left border-b border-[#f1f1f1] last:border-0 transition-colors">
+                                                        {u.avatar ? <img src={u.avatar} className="w-8 h-8 rounded-full" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><User className="w-4 h-4 text-muted-foreground" /></div>}
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-black text-foreground truncate">{u.display_name}</p>
+                                                            <p className="text-[10px] text-muted-foreground font-mono truncate">@{u.username}</p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </motion.div>
                                 )}
-                            </div>
-                        )}
-                        <div className="flex rounded-xl bg-white p-1.5 text-[10px] font-black uppercase tracking-widest">
-                            <button onClick={() => setMode('individual')} className={`px-5 py-2 rounded-lg transition-colors ${mode === 'individual' ? 'bg-[#545454] text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>ユーザー別</button>
-                            <button onClick={() => setMode('total')} className={`px-5 py-2 rounded-lg transition-colors ${mode === 'total' ? 'bg-[#545454] text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>合計</button>
+                            </AnimatePresence>
                         </div>
+                        <LayoutGroup>
+                            <div className="flex rounded-xl bg-white p-1.5 text-[10px] font-black uppercase tracking-widest">
+                                <button onClick={() => setMode('individual')} className={`relative rounded-lg px-5 py-2 transition-colors ${mode === 'individual' ? 'text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>
+                                    {mode === 'individual' && <motion.span layoutId="trend-mode-active" className="absolute inset-0 rounded-lg bg-[#545454]" transition={{ type: 'spring', bounce: 0.12, duration: 0.35 }} />}
+                                    <span className="relative z-10">ユーザー別</span>
+                                </button>
+                                <button onClick={() => setMode('total')} className={`relative rounded-lg px-5 py-2 transition-colors ${mode === 'total' ? 'text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>
+                                    {mode === 'total' && <motion.span layoutId="trend-mode-active" className="absolute inset-0 rounded-lg bg-[#545454]" transition={{ type: 'spring', bounce: 0.12, duration: 0.35 }} />}
+                                    <span className="relative z-10">合計</span>
+                                </button>
+                            </div>
+                        </LayoutGroup>
                     </div>
                 </div>
             </CardHeader>
 
             <CardContent className="pt-0">
-                <div ref={containerRef} className="rounded-2xl bg-white p-4" style={{ width: '100%', height: '400px' }}>
+                <div ref={containerRef} className="relative overflow-hidden rounded-2xl bg-white p-4" style={{ width: '100%', height: '400px' }}>
                     {shouldRender && (
-                        <ResponsiveContainer width="100%" height="100%">
-                            {mode === 'individual' ? (
+                        <AnimatePresence mode="wait" initial={false}>
+                            <motion.div
+                                key={mode}
+                                className="absolute inset-4"
+                                variants={chartMotion}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={{
+                                    opacity: { duration: 0.24, ease: 'easeOut' },
+                                    y: { duration: 0.24, ease: 'easeOut' },
+                                    clipPath: { duration: 0.24, ease: 'easeOut' },
+                                }}
+                                style={{ willChange: 'opacity, transform, clip-path' }}
+                            >
+                                <ResponsiveContainer width="100%" height="100%">
+                                    {mode === 'individual' ? (
                                 <LineChart data={chart_data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
@@ -251,8 +304,10 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     <Tooltip content={<TotalTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} isAnimationActive={false} />
                                     <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                                 </BarChart>
-                            )}
-                        </ResponsiveContainer>
+                                    )}
+                                </ResponsiveContainer>
+                            </motion.div>
+                        </AnimatePresence>
                     )}
                 </div>
 

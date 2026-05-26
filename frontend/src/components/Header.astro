@@ -9,7 +9,6 @@ import {
 } from "./ui/breadcrumb.tsx";
 import { Home } from "lucide-react";
 import { LogoutButton, LoginButton } from "./AuthButtons.jsx";
-import { ToggleTheme } from "./ToggleTheme.jsx";
 import { fetchAPI } from "@/lib/api";
 
 const { url } = Astro;
@@ -79,10 +78,6 @@ const month = parts[2];
   </Breadcrumb>
 
   <div class="flex items-center gap-3">
-    <ToggleTheme client:load />
-
-    <div class="h-5 w-px bg-border"></div>
-
     <a
       href="https://github.com/y-exe/ymkw-top"
       target="_blank"

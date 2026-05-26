@@ -92,7 +92,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
 
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="flex-1 min-w-0 space-y-6">
-                        <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} />
+                        <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} personalAvatar={data.myData?.avatar} />
 
                         {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
 

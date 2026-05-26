@@ -33,7 +33,7 @@ function StatItem({ icon: Icon, title, value, sub, colorClass = "text-[#111F35]"
     );
 }
 
-function Section({ title, data, isPersonal = false }) {
+function Section({ title, data, iconSrc, isPersonal = false }) {
     if (!data || data.total === 0) {
         return (
             <div className="flex h-full min-h-[180px] items-center justify-center rounded-xl border-2 border-dashed border-white/50 bg-white/12 p-6 text-center text-xs font-bold text-white/75">
@@ -46,9 +46,17 @@ function Section({ title, data, isPersonal = false }) {
     const bg = "bg-[#f8f8f8]";
 
     return (
-        <div className="relative h-full min-h-[180px] overflow-hidden rounded-xl border-2 border-white !bg-white">
+        <div className="relative h-full min-h-[180px] overflow-visible rounded-xl border-2 border-white !bg-white">
             <div className="absolute bottom-4 left-1/2 top-4 z-[1] w-1.5 -translate-x-1/2 rounded-full bg-gray-300" />
             <div className="absolute left-4 right-4 top-1/2 z-[1] h-1.5 -translate-y-1/2 rounded-full bg-gray-300" />
+
+            {iconSrc && (
+                <img
+                    src={iconSrc}
+                    alt=""
+                    className="absolute left-1/2 top-0 z-20 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-[#545454] object-cover"
+                />
+            )}
 
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#111F35] px-7 py-3 text-center text-base font-black leading-tight text-white">
                 {title}
@@ -98,19 +106,19 @@ function Section({ title, data, isPersonal = false }) {
     );
 }
 
-export default function AnalysisPanel({ overall, personal, isPersonalAvailable }) {
+export default function AnalysisPanel({ overall, personal, isPersonalAvailable, personalAvatar }) {
     if (isPersonalAvailable) {
         return (
             <Card className="grid min-h-[220px] grid-cols-1 gap-6 rounded-2xl !bg-[#f8f8f8] p-5 !shadow-none lg:grid-cols-2">
-                <Section title={TEXT.all} data={overall} />
-                <Section title={TEXT.personal} data={personal} isPersonal={true} />
+                <Section title={TEXT.all} data={overall} iconSrc="/ymkw.webp" />
+                <Section title={TEXT.personal} data={personal} iconSrc={personalAvatar} isPersonal={true} />
             </Card>
         );
     }
 
     return (
         <Card className="grid min-h-[220px] grid-cols-1 gap-6 rounded-2xl !bg-[#f8f8f8] p-5 !shadow-none">
-            <Section title={TEXT.all} data={overall} />
+            <Section title={TEXT.all} data={overall} iconSrc="/ymkw.webp" />
         </Card>
     );
 }

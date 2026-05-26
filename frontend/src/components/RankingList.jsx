@@ -27,7 +27,7 @@ export default function RankingList({ data, highlightUserId }) {
     };
 
     return (
-        <Card className="flex h-full flex-col overflow-hidden !border-[4px] !border-white/35 !bg-[#111F35] !text-white !shadow-[0_18px_44px_rgba(17,31,53,0.45),0_0_0_1px_rgba(255,255,255,0.14)]">
+        <Card className="flex h-full flex-col overflow-hidden !border-[4px] !border-white/35 !bg-[#111F35] !text-white !shadow-none">
             <div className="flex items-center gap-2 border-b-2 border-white/15 px-5 py-4">
                 <h3 className="text-base font-bold text-white">ランキング</h3>
             </div>
