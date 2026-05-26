@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Search, User } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +61,23 @@ const TotalTooltip = ({ active, payload, label }) => {
     return null;
 };
 
+const TOTAL_BAR_COLORS = ['#d9d9d9', '#b4b4b4', '#737373', '#545454'];
+
+const getTotalBarColor = (value, maxTotal, sortedNonMaxTotals) => {
+    if (value === maxTotal) return '#ff3131';
+    if (sortedNonMaxTotals.length <= 1) return TOTAL_BAR_COLORS[0];
+
+    const rank = sortedNonMaxTotals.findIndex((total) => value <= total);
+    const safeRank = rank === -1 ? sortedNonMaxTotals.length - 1 : rank;
+    const ratio = safeRank / (sortedNonMaxTotals.length - 1);
+    const colorIndex = Math.min(
+        TOTAL_BAR_COLORS.length - 1,
+        Math.floor(ratio * TOTAL_BAR_COLORS.length)
+    );
+
+    return TOTAL_BAR_COLORS[colorIndex];
+};
+
 export default function TrendChart({ apiData, highlightUserId, focusedUserId, onSearchUser }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -109,6 +126,12 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
         });
         return patched;
     });
+
+    const totalValues = chart_data.map((dayData) => Number(dayData.total) || 0);
+    const maxTotal = Math.max(...totalValues);
+    const sortedNonMaxTotals = totalValues
+        .filter((total) => total < maxTotal)
+        .sort((a, b) => a - b);
 
     const handleSelectUser = (u) => {
         setSearchTerm('');
@@ -302,7 +325,14 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                         tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800 }}
                                     />
                                     <Tooltip content={<TotalTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} isAnimationActive={false} />
-                                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                                    <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+                                        {chart_data.map((entry, index) => (
+                                            <Cell
+                                                key={`total-bar-${entry.date || index}`}
+                                                fill={getTotalBarColor(Number(entry.total) || 0, maxTotal, sortedNonMaxTotals)}
+                                            />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                                     )}
                                 </ResponsiveContainer>
@@ -311,7 +341,6 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                     )}
                 </div>
 
-                {/* Legend */}
                 <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4 justify-center">
                     <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-red-500"></div><span className="text-[10px] font-black text-muted-foreground tracking-widest">自分</span></div>
                     <div className="flex items-center gap-2"><div className="w-8 h-1 rounded-full bg-blue-500"></div><span className="text-[10px] font-black text-muted-foreground tracking-widest">選択中</span></div>

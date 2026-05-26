@@ -9,8 +9,7 @@ export default function ActivityHeatmap({ data }) {
   const dataMap = {};
   let maxCount = 0;
 
-  const sortedData = [...data].sort((a, b) => b.count - a.count);
-  const top5Threshold = sortedData.length >= 5 ? sortedData[4].count : (sortedData.length > 0 ? sortedData[sortedData.length - 1].count : 0);
+  const sortedData = [...data].filter(d => d.count > 0).sort((a, b) => b.count - a.count);
   const top5Entries = sortedData.slice(0, 5).map(d => `${d.dow}-${d.hour}`);
 
   data.forEach(d => {
@@ -21,7 +20,7 @@ export default function ActivityHeatmap({ data }) {
 
   const getStyle = (count, dow, hour) => {
     if (count === 0) {
-      return { backgroundColor: 'transparent', border: '1px solid var(--border)', opacity: 0.3 };
+      return { backgroundColor: '#ffffff', opacity: 1 };
     }
 
     const isTop5 = top5Entries.includes(`${dow}-${hour}`);

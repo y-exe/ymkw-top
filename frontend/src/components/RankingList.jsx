@@ -58,11 +58,11 @@ export default function RankingList({ data, highlightUserId }) {
             </div>
 
             {isModalOpen && createPortal(
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in" onClick={closeModal}>
-                    <Card className="w-full max-w-lg h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-                        <CardHeader className="p-4 border-b border-border flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-lg">ランキング一覧</CardTitle>
-                            <button onClick={closeModal} className="p-2 hover:bg-accent rounded-full transition-colors"><X className="w-4 h-4 text-muted-foreground" /></button>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in" onClick={closeModal}>
+                    <Card className="w-full max-w-lg h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 !border-[4px] !border-white/35 !bg-[#111F35] !text-white !shadow-none" onClick={e => e.stopPropagation()}>
+                        <CardHeader className="p-4 border-b-2 border-white/15 flex flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-lg text-white">ランキング一覧</CardTitle>
+                            <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X className="w-4 h-4 text-white/60" /></button>
                         </CardHeader>
                         <CardContent className="flex-1 overflow-y-auto p-0 custom-scrollbar">
                             {data.map((user, i) => (

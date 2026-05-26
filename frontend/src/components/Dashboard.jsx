@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PageHeader from './PageHeader';
+import PageHeader, { ReportPeriodCard } from './PageHeader';
 import AnalysisPanel from './charts/AnalysisPanel';
 import StatsCard from './StatsCard';
 import TrendChart from './charts/TrendChart';
@@ -88,7 +88,12 @@ export default function Dashboard({ year, month, channelId, userId }) {
     return (
         <MouseEffectCard className="min-h-screen pb-32">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
-                <PageHeader title={`${year}.${month}`} subTitle="月間レポート" />
+                <ReportPeriodCard
+                    title={`${year}.${month}`}
+                    subTitle="月間レポート"
+                    className="fixed left-4 top-36 z-30 shadow-sm md:left-[22rem] md:top-20"
+                />
+                <PageHeader title={`${year}.${month}`} subTitle="月間レポート" showPeriodCard={false} />
 
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="flex-1 min-w-0 space-y-6">

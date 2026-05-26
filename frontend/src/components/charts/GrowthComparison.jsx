@@ -63,9 +63,9 @@ export default function GrowthComparison({ current, previous }) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
+                    <div className="flex items-center justify-between rounded-xl bg-white p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-background border border-border">
+                            <div className="rounded-lg bg-orange-500/10 p-2">
                                 <Clock className="w-4 h-4 text-orange-500" />
                             </div>
                             <div>
@@ -79,9 +79,9 @@ export default function GrowthComparison({ current, previous }) {
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
+                    <div className="flex items-center justify-between rounded-xl bg-white p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-background border border-border">
+                            <div className="rounded-lg bg-green-500/10 p-2">
                                 <Calendar className="w-4 h-4 text-green-500" />
                             </div>
                             <div>

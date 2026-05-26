@@ -27,12 +27,8 @@ const user = { id: userId, name: userName, avatar: userAvatar };
 
 const currentPath = Astro.url.pathname;
 const queryParams = Astro.url.search;
-const channelId = Astro.url.searchParams.get("channel");
 
 const parts = currentPath.split("/").filter(Boolean);
-const mode = parts[0] === "open" ? "履歴" : "月間";
-const year = parts[1];
-const month = parts[2];
 const isDashboard =
   currentPath.includes("/month/") || currentPath.includes("/open/");
 
@@ -100,7 +96,7 @@ if (breadcrumbs.length > 0) {
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@400;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;700;900&family=Outfit:wght@400;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -171,30 +167,10 @@ if (breadcrumbs.length > 0) {
               <main
                 class={
                   isDashboard
-                    ? "px-4 md:px-8 lg:px-12 lg:pt-12 lg:pb-0 flex-1 bg-white"
+                    ? "px-4 md:px-8 lg:px-12 lg:pt-0 lg:pb-0 flex-1 bg-white"
                     : "px-4 md:px-8 lg:p-12 flex-1 pb-32"
                 }
               >
-                {isDashboard && (
-                  <div class="md:hidden mb-6 flex items-center justify-center text-[10px] font-bold text-muted-foreground bg-background/90 py-3 px-5 rounded-2xl border border-border shadow-sm backdrop-blur-lg mx-auto w-fit">
-                    <span class="text-foreground uppercase tracking-widest">
-                      {mode}
-                    </span>
-                    {year && (
-                      <span>
-                        <span class="mx-2 text-muted-foreground/30">/</span>
-                        {year}年 {month}月
-                      </span>
-                    )}
-                    {channelId && (
-                      <span>
-                        <span class="mx-2 text-muted-foreground/30">/</span>
-                        <span class="text-primary">CH_{channelId}</span>
-                      </span>
-                    )}
-                  </div>
-                )}
-
                 <slot />
               </main>
 
