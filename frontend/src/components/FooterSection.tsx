@@ -17,13 +17,6 @@ export default function FooterSection({
             ],
         },
         {
-            title: "About",
-            links: [
-                { text: "Terms of Service", url: "/terms" },
-                { text: "Privacy Policy", url: "/privacy" },
-            ],
-        },
-        {
             title: "Community",
             links: [
                 { text: "Discord Server", url: "https://discord.com/invite/Cn7GV9rn7Y" },
@@ -31,14 +24,14 @@ export default function FooterSection({
             ],
         },
     ],
-    copyright = "© 2025 ymkw.top. All rights reserved.",
+    copyright = "© 2026 ymkw.top. All rights reserved.",
     bottomLinks = [
         { text: "Terms", url: "/terms" },
         { text: "Privacy", url: "/privacy" },
     ],
 }) {
     return (
-        <footer className="bg-background py-16 border-t border-border">
+        <footer className="bg-[#f9f9f9] py-16">
             <div className="container mx-auto px-6 max-w-7xl">
                 <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-10">
                     <div className="max-w-sm text-center lg:text-left">

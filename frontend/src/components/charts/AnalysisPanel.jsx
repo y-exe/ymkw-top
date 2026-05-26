@@ -33,6 +33,21 @@ function StatItem({ icon: Icon, title, value, sub, colorClass = "text-[#111F35]"
     );
 }
 
+function MobileStatItem({ icon: Icon, title, value, sub, colorClass = "text-[#111F35]", bgClass = "bg-[#111F35]/10" }) {
+    return (
+        <div className="flex min-w-0 items-start gap-2 rounded-xl bg-[#f8f8f8] p-3">
+            <div className={`flex-shrink-0 rounded-lg p-1.5 ${bgClass}`}>
+                <Icon className={`h-3.5 w-3.5 ${colorClass}`} />
+            </div>
+            <div className="min-w-0">
+                <p className="text-[10px] font-bold leading-none text-gray-500">{title}</p>
+                <p className="mt-1 text-lg font-black leading-tight text-[#111F35]">{value}</p>
+                {sub && <p className="mt-0.5 text-[10px] font-bold leading-tight text-gray-500">{sub}</p>}
+            </div>
+        </div>
+    );
+}
+
 function Section({ title, data, iconSrc, isPersonal = false }) {
     if (!data || data.total === 0) {
         return (
@@ -46,7 +61,57 @@ function Section({ title, data, iconSrc, isPersonal = false }) {
     const bg = "bg-[#f8f8f8]";
 
     return (
-        <div className="relative h-full min-h-[180px] overflow-visible rounded-xl border-2 border-white !bg-white">
+        <>
+        <div className="relative rounded-xl border-2 border-white !bg-white p-4 pt-8 sm:hidden">
+            {iconSrc && (
+                <img
+                    src={iconSrc}
+                    alt=""
+                    className="absolute left-1/2 top-0 z-20 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover"
+                />
+            )}
+            <div className="mb-4 flex justify-center">
+                <div className="rounded-full bg-[#111F35] px-6 py-2 text-sm font-black leading-tight text-white">
+                    {title}
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <MobileStatItem
+                    icon={MessageCircle}
+                    title={TEXT.total}
+                    value={data.total.toLocaleString()}
+                    sub={TEXT.count}
+                    colorClass={color}
+                    bgClass={bg}
+                />
+                <MobileStatItem
+                    icon={Clock}
+                    title={TEXT.peakHour}
+                    value={data.max_hour ? `${data.max_hour.hour}:00` : '--:--'}
+                    sub={data.max_hour ? `${data.max_hour.count}${TEXT.count}` : ''}
+                    colorClass="text-orange-500"
+                    bgClass="bg-orange-500/10"
+                />
+                <MobileStatItem
+                    icon={Calendar}
+                    title={TEXT.maxDate}
+                    value={data.max_date ? data.max_date.date.slice(5).replace('-', '/') : '--/--'}
+                    sub={data.max_date ? `${data.max_date.count}${TEXT.count}` : ''}
+                    colorClass="text-green-500"
+                    bgClass="bg-green-500/10"
+                />
+                <MobileStatItem
+                    icon={BarChart3}
+                    title={TEXT.maxDow}
+                    value={data.max_dow ? `${DOW_MAP[data.max_dow.dow]}${TEXT.weekday}` : '-'}
+                    sub={data.max_dow ? `${data.max_dow.count}${TEXT.count}` : ''}
+                    colorClass="text-purple-500"
+                    bgClass="bg-purple-500/10"
+                />
+            </div>
+        </div>
+
+        <div className="relative hidden h-full min-h-[180px] overflow-visible rounded-xl border-2 border-white !bg-white sm:block">
             <div className="absolute bottom-4 left-1/2 top-4 z-[1] w-1.5 -translate-x-1/2 rounded-full bg-gray-300" />
             <div className="absolute left-4 right-4 top-1/2 z-[1] h-1.5 -translate-y-1/2 rounded-full bg-gray-300" />
 
@@ -103,6 +168,7 @@ function Section({ title, data, iconSrc, isPersonal = false }) {
                 />
             </div>
         </div>
+        </>
     );
 }
 

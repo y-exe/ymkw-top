@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, MessageSquare, Clock, Calendar, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Calendar, ArrowRight } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 
 export default function GrowthComparison({ current, previous }) {
@@ -30,10 +30,6 @@ export default function GrowthComparison({ current, previous }) {
             </CardHeader>
             <CardContent className="space-y-8">
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        <MessageSquare className="w-3 h-3" />
-                        メッセージボリューム
-                    </div>
                     <div className="space-y-4">
                         <div className="space-y-1.5">
                             <div className="flex justify-between text-xs font-bold">

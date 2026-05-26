@@ -105,7 +105,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
     }, [searchTerm]);
 
     if (!apiData || !apiData.chart_data || apiData.chart_data.length === 0) {
-        return <div className="w-full h-[400px] bg-muted rounded-2xl border border-dashed border-border flex items-center justify-center text-muted-foreground font-black tracking-widest text-xs">アクティビティデータがありません</div>;
+        return <div className="w-full h-[280px] md:h-[400px] bg-muted rounded-2xl border border-dashed border-border flex items-center justify-center text-muted-foreground font-black tracking-widest text-xs">アクティビティデータがありません</div>;
     }
 
     const { chart_data: rawChartData, users, top_user_id } = apiData;
@@ -166,61 +166,60 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                             アクティビティ推移
                         </CardTitle>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="relative h-[42px] w-48 shrink-0">
-                            <AnimatePresence initial={false}>
-                                {mode === 'individual' && (
-                                    <motion.div
-                                        key="user-search"
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        transition={{ duration: 0.18, ease: 'easeOut' }}
-                                        className="absolute inset-0"
-                                    >
-                                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#545454]" />
-                                        <input
-                                            type="text"
-                                            placeholder="ユーザーを追加..."
-                                            className="h-full w-48 rounded-xl border-0 bg-white py-3 pl-11 pr-4 text-xs font-bold text-[#545454] outline-none transition-colors placeholder:text-[#545454]/55 focus:bg-white"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                        {searchResults.length > 0 && (
-                                            <div className="absolute top-full right-0 z-[110] mt-2 w-64 overflow-hidden rounded-xl border-0 bg-white text-[#545454]">
-                                                {searchResults.map(u => (
-                                                    <button key={u.user_id} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-3 p-3 hover:bg-[#f8f8f8] text-left border-b border-[#f1f1f1] last:border-0 transition-colors">
-                                                        {u.avatar ? <img src={u.avatar} className="w-8 h-8 rounded-full" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><User className="w-4 h-4 text-muted-foreground" /></div>}
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-xs font-black text-foreground truncate">{u.display_name}</p>
-                                                            <p className="text-[10px] text-muted-foreground font-mono truncate">@{u.username}</p>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                    <motion.div layout className="flex w-full flex-col items-stretch gap-3 md:w-auto md:flex-row md:items-center md:gap-4">
+                        <AnimatePresence initial={false}>
+                            {mode === 'individual' && (
+                                <motion.div
+                                    key="user-search"
+                                    layout
+                                    initial={{ opacity: 0, height: 0, y: -8 }}
+                                    animate={{ opacity: 1, height: 42, y: 0 }}
+                                    exit={{ opacity: 0, height: 0, y: -8 }}
+                                    transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                                    className="relative w-full shrink-0 overflow-hidden md:w-48"
+                                >
+                                    <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#545454]" />
+                                    <input
+                                        type="text"
+                                        placeholder="ユーザーを追加..."
+                                        className="h-full w-full rounded-xl border-0 bg-white py-3 pl-11 pr-4 text-xs font-bold text-[#545454] outline-none transition-colors placeholder:text-[#545454]/55 focus:bg-white md:w-48"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    {searchResults.length > 0 && (
+                                        <div className="absolute top-full right-0 z-[110] mt-2 w-64 overflow-hidden rounded-xl border-0 bg-white text-[#545454]">
+                                            {searchResults.map(u => (
+                                                <button key={u.user_id} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-3 p-3 hover:bg-[#f8f8f8] text-left border-b border-[#f1f1f1] last:border-0 transition-colors">
+                                                    {u.avatar ? <img src={u.avatar} className="w-8 h-8 rounded-full" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><User className="w-4 h-4 text-muted-foreground" /></div>}
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs font-black text-foreground truncate">{u.display_name}</p>
+                                                        <p className="text-[10px] text-muted-foreground font-mono truncate">@{u.username}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                         <LayoutGroup>
-                            <div className="flex rounded-xl bg-white p-1.5 text-[10px] font-black uppercase tracking-widest">
-                                <button onClick={() => setMode('individual')} className={`relative rounded-lg px-5 py-2 transition-colors ${mode === 'individual' ? 'text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>
+                            <motion.div layout className="flex w-full rounded-xl bg-white p-1.5 text-[10px] font-black uppercase tracking-widest md:w-auto">
+                                <button onClick={() => setMode('individual')} className={`relative flex-1 rounded-lg px-5 py-2 transition-colors md:flex-none ${mode === 'individual' ? 'text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>
                                     {mode === 'individual' && <motion.span layoutId="trend-mode-active" className="absolute inset-0 rounded-lg bg-[#545454]" transition={{ type: 'spring', bounce: 0.12, duration: 0.35 }} />}
                                     <span className="relative z-10">ユーザー別</span>
                                 </button>
-                                <button onClick={() => setMode('total')} className={`relative rounded-lg px-5 py-2 transition-colors ${mode === 'total' ? 'text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>
+                                <button onClick={() => setMode('total')} className={`relative flex-1 rounded-lg px-5 py-2 transition-colors md:flex-none ${mode === 'total' ? 'text-white' : 'text-[#545454] hover:bg-[#545454]/10'}`}>
                                     {mode === 'total' && <motion.span layoutId="trend-mode-active" className="absolute inset-0 rounded-lg bg-[#545454]" transition={{ type: 'spring', bounce: 0.12, duration: 0.35 }} />}
                                     <span className="relative z-10">合計</span>
                                 </button>
-                            </div>
+                            </motion.div>
                         </LayoutGroup>
-                    </div>
+                    </motion.div>
                 </div>
             </CardHeader>
 
             <CardContent className="pt-0">
-                <div ref={containerRef} className="relative overflow-hidden rounded-2xl bg-white p-4" style={{ width: '100%', height: '400px' }}>
+                <div ref={containerRef} className="relative h-[280px] overflow-hidden rounded-2xl bg-white p-4 md:h-[400px]" style={{ width: '100%' }}>
                     {shouldRender && (
                         <AnimatePresence mode="wait" initial={false}>
                             <motion.div

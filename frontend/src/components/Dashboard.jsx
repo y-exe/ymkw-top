@@ -91,7 +91,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
                 <ReportPeriodCard
                     title={`${year}.${month}`}
                     subTitle="月間レポート"
-                    className="fixed left-4 top-36 z-30 shadow-sm md:left-[22rem] md:top-20"
+                    className="fixed left-4 top-28 z-30 shadow-sm md:left-[22rem] md:top-20"
                 />
                 <PageHeader title={`${year}.${month}`} subTitle="月間レポート" showPeriodCard={false} />
 
