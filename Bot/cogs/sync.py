@@ -4,28 +4,6 @@ import asyncpg
 import config
 import asyncio
 
-TARGET_CHANNEL_IDS = [
-    1355425464729993367,
-    1355073969199382530,
-    1357298745506791574,
-    1450890768255422595,
-    1373320764945858740,
-    1356324385983697098,
-    1355497603910865046,
-    1355552587394449589,
-    1371391700131647491,
-    1355546326657667150,
-    1399071027925094617,
-    1355810985356689547,
-    1360622424579899524,
-    1356237901645746348,
-    1406033558757314752,
-    1383029750166982656,
-    1355570062378930317,
-    1355546503048859840,
-    1361713489990779172,
-]
-
 class SyncData(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -39,8 +17,10 @@ class SyncData(commands.Cog):
                 channel_id BIGINT PRIMARY KEY,
                 name TEXT NOT NULL,
                 category_name TEXT,
-                position INTEGER
+                position INTEGER,
+                is_active BOOLEAN DEFAULT TRUE
             );
+            ALTER TABLE channels ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
         ''')
 
         await pool.execute('''
@@ -74,34 +54,39 @@ class SyncData(commands.Cog):
         pool = await asyncpg.create_pool(self.db_dsn)
         try:
             channel_data = []
-            for channel in guild.text_channels:
-                if channel.id not in TARGET_CHANNEL_IDS:
-                    continue
+            channels = list(guild.text_channels) + list(getattr(guild, "forums", [])) + list(await guild.active_threads())
 
+            for channel in channels:
                 perms = channel.permissions_for(guild.me)
                 if not perms.read_message_history or not perms.view_channel:
                     continue
 
-                if channel.category:
-                    cat_name = channel.category.name
-                    cat_pos = channel.category.position
+                parent = getattr(channel, "parent", None) if isinstance(channel, discord.Thread) else None
+                category = parent.category if parent and parent.category else getattr(channel, "category", None)
+
+                if category:
+                    cat_name = category.name
+                    cat_pos = category.position
                 else:
                     cat_name = "未分類"
                     cat_pos = 999
 
-                sort_position = (cat_pos * 1000) + channel.position
-                channel_data.append((channel.id, channel.name, cat_name, sort_position))
+                base_position = parent.position if parent else getattr(channel, "position", 999)
+                sort_position = (cat_pos * 1000) + base_position
+                name = f"{parent.name} / {channel.name}" if parent else channel.name
+                channel_data.append((channel.id, name, cat_name, sort_position, True))
 
+            await pool.execute("UPDATE channels SET is_active = FALSE")
             if channel_data:
                 await pool.executemany('''
-                    INSERT INTO channels (channel_id, name, category_name, position)
-                    VALUES ($1, $2, $3, $4)
+                    INSERT INTO channels (channel_id, name, category_name, position, is_active)
+                    VALUES ($1, $2, $3, $4, $5)
                     ON CONFLICT (channel_id) DO UPDATE 
-                    SET name = EXCLUDED.name, category_name = EXCLUDED.category_name, position = EXCLUDED.position
+                    SET name = EXCLUDED.name,
+                        category_name = EXCLUDED.category_name,
+                        position = EXCLUDED.position,
+                        is_active = EXCLUDED.is_active
                 ''', channel_data)
-
-            if TARGET_CHANNEL_IDS:
-                await pool.execute('DELETE FROM channels WHERE channel_id != ALL($1::bigint[])', TARGET_CHANNEL_IDS)
 
             member_data = []
             for member in guild.members:

@@ -1,5 +1,6 @@
 import os
 import socket
+from urllib.parse import urlparse, urlunparse
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,6 +14,11 @@ def adjust_db_dsn(dsn: str) -> str:
     
     in_container = os.path.exists('/.dockerenv')
     if not in_container:
+        parsed = urlparse(dsn)
+        if parsed.hostname == "postgres-db":
+            port = os.getenv("LOCAL_DB_PORT", "5433")
+            userinfo = parsed.netloc.rsplit("@", 1)[0] + "@" if "@" in parsed.netloc else ""
+            return urlunparse(parsed._replace(netloc=f"{userinfo}localhost:{port}"))
         return dsn.replace("localhost", "127.0.0.1") if "localhost" in dsn else dsn
     
     if "localhost" in dsn or "127.0.0.1" in dsn or "postgres-db" in dsn:

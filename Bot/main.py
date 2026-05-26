@@ -27,13 +27,13 @@ async def load_extensions():
         if filename.endswith(".py"):
             try:
                 await bot.load_extension(f"cogs.{filename[:-3]}")
-                print(f"ロード完了: {filename}")
+                print(f"ロード完了")
             except Exception as e:
-                print(f"拡張機能ロード失敗 ({filename}): {e}")
+                print(f"ロード失敗")
 
 async def main():
     if not config.TOKEN:
-        print("エラー: .envにトークンが設定されていません。")
+        print("エラー")
         return
 
     async with bot:
@@ -41,7 +41,7 @@ async def main():
         try:
             await bot.start(config.TOKEN)
         except discord.LoginFailure:
-            print("トークンが無効")
+            print("トークン無効")
         except Exception as e:
             print(f"エラー； {e}")
 

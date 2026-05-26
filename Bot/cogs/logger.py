@@ -8,10 +8,20 @@ class Logger(commands.Cog):
         self.bot = bot
         self.db_dsn = config.DB_DSN
         self.pool = None
+        self.known_channel_ids = set()
 
     async def cog_load(self):
         self.pool = await asyncpg.create_pool(self.db_dsn)
         await self.pool.execute('''
+            CREATE TABLE IF NOT EXISTS channels (
+                channel_id BIGINT PRIMARY KEY,
+                name TEXT NOT NULL,
+                category_name TEXT,
+                position INTEGER,
+                is_active BOOLEAN DEFAULT TRUE
+            );
+            ALTER TABLE channels ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
             CREATE TABLE IF NOT EXISTS messages (
                 message_id BIGINT PRIMARY KEY,
                 user_id BIGINT NOT NULL,
@@ -39,6 +49,7 @@ class Logger(commands.Cog):
             return
 
         try:
+            await self.ensure_channel(message.channel)
             await self.pool.execute("""
                 INSERT INTO messages (message_id, user_id, channel_id, guild_id, created_at, is_bot, char_count)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -54,6 +65,35 @@ class Logger(commands.Cog):
             )
         except Exception as e:
             print(f"Log Error: {e}")
+
+    async def ensure_channel(self, channel):
+        if channel.id in self.known_channel_ids:
+            return
+
+        parent = getattr(channel, "parent", None) if isinstance(channel, discord.Thread) else None
+        category = parent.category if parent and parent.category else getattr(channel, "category", None)
+
+        if category:
+            category_name = category.name
+            category_position = category.position
+        else:
+            category_name = "未分類"
+            category_position = 999
+
+        base_position = parent.position if parent else getattr(channel, "position", 999)
+        position = (category_position * 1000) + base_position
+        name = f"{parent.name} / {channel.name}" if parent else channel.name
+
+        await self.pool.execute('''
+            INSERT INTO channels (channel_id, name, category_name, position, is_active)
+            VALUES ($1, $2, $3, $4, TRUE)
+            ON CONFLICT (channel_id) DO UPDATE
+            SET name = EXCLUDED.name,
+                category_name = EXCLUDED.category_name,
+                position = EXCLUDED.position,
+                is_active = TRUE
+        ''', channel.id, name, category_name, position)
+        self.known_channel_ids.add(channel.id)
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):

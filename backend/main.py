@@ -47,6 +47,12 @@ if not raw_dsn:
 def adjust_db_dsn(dsn: str) -> str:
     in_container = os.path.exists('/.dockerenv')
     if not in_container:
+        from urllib.parse import urlparse, urlunparse
+        parsed = urlparse(dsn)
+        if parsed.hostname == "postgres-db":
+            port = os.getenv("LOCAL_DB_PORT", "5433")
+            userinfo = parsed.netloc.rsplit("@", 1)[0] + "@" if "@" in parsed.netloc else ""
+            return urlunparse(parsed._replace(netloc=f"{userinfo}localhost:{port}"))
         return dsn.replace("localhost", "127.0.0.1") if "localhost" in dsn else dsn
     
     if "localhost" in dsn or "127.0.0.1" in dsn:
@@ -323,7 +329,7 @@ async def get_channels(response: Response):
     rows = await pool.fetch("SELECT * FROM channels WHERE is_active = TRUE ORDER BY position ASC")
     
     res = [
-        {"id": str(r["channel_id"]), "name": r["name"], "category": r["category_name"] if r["category_name"] else "未分類"} 
+        {"id": str(r["channel_id"]), "name": r["name"], "category": r["category_name"] if r["category_name"] else "未分類"}
         for r in rows if r["channel_id"] in WHITELIST_CHANNEL_IDS
     ]
     
@@ -607,6 +613,13 @@ async def debug_db():
                 counts[t] = r
             except Exception as te:
                 counts[t] = f"Error: {str(te)}"
+        message_range = await pool.fetchrow('''
+            SELECT
+                min(created_at) AS first_at,
+                max(created_at) AS last_at,
+                count(*) FILTER (WHERE is_bot = FALSE) AS human_messages
+            FROM messages
+        ''')
         
         from urllib.parse import urlparse
         parsed = urlparse(DB_DSN)
@@ -616,6 +629,11 @@ async def debug_db():
             "host": parsed.hostname,
             "database": parsed.path.lstrip('/'),
             "counts": counts,
+            "messages": {
+                "first_at": message_range["first_at"],
+                "last_at": message_range["last_at"],
+                "human_messages": message_range["human_messages"],
+            },
             "in_container": os.path.exists('/.dockerenv')
         }
     except Exception as e:

@@ -63,10 +63,39 @@ PUBLIC_API_URL=https://api.example.com
 **Botの起動 (データ収集):**
 
 ```bash
-cd bot
+cd Bot
 pip install -r requirements.txt
 python main.py
 ```
+
+**過去ログの再取得 (バックフィル):**
+
+Botが停止していた期間のメッセージは、通常起動だけでは自動復旧されません。
+必要な期間を指定して `history_scanner.py` を一度実行してください。
+
+```bash
+cd Bot
+python history_scanner.py
+```
+
+終了日を区切る場合:
+
+```bash
+python history_scanner.py --after 2025-03-28 --before 2026-05-01
+```
+
+進捗を無視して完全に最初から走らせ直す場合:
+
+```bash
+python history_scanner.py --after 2025-03-28 --reset-progress
+```
+
+デフォルトでは `2025-03-28` 以降を再取得します。
+同じメッセージを再取得した場合は、`message_id` をキーにユーザーID、チャンネルID、作成日時、Bot判定、文字数を上書きします。
+再取得の進捗は `backfill_progress` に保存されるため、途中で止まった場合も同じコマンドで続きから再開できます。
+今後のデータ蓄積は `python main.py` でBotを常時起動している間、`on_message` により自動で行われます。
+通常のテキストチャンネルに加えて、フォーラム投稿およびスレッド内のメッセージも再取得対象です。
+ローカルPowerShellから実行する場合、`postgres-db:5432` は自動で `localhost:5433` として扱われます。
 
 **バックエンドAPIの起動:**
 
