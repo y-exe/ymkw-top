@@ -53,7 +53,7 @@ export default function FooterSection({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-8 flex-1 lg:ml-20">
+                    <div className="grid grid-cols-2 gap-8 lg:ml-12 lg:w-80 lg:flex-none">
                         {menuItems.map((section, sectionIdx) => (
                             <div key={sectionIdx}>
                                 <h3 className="mb-3 text-sm font-semibold text-foreground">

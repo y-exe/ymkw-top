@@ -75,11 +75,20 @@ const description =
     }
     .bg-text-content {
       font-family: "Dela Gothic One", cursive;
-      font-size: 25vw;
-      line-height: 1;
-      transform: scale(1, 3.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 52vw;
+      line-height: 0.86;
+      text-align: center;
+      transform: scale(1.08, 2.9);
       user-select: none;
       color: hsl(var(--foreground));
+      white-space: normal;
+    }
+    .bg-text-content span {
+      display: block;
       white-space: nowrap;
     }
     .header-logo {
@@ -88,6 +97,7 @@ const description =
       align-items: center;
       justify-content: center;
       z-index: 10;
+      margin-bottom: 2rem;
     }
     .header-sub {
       font-weight: 700;
@@ -106,9 +116,11 @@ const description =
     .footer {
       z-index: 10;
       text-align: center;
-      font-size: 0.625rem;
+      font-size: 0.5rem;
       color: hsl(var(--muted-foreground));
       font-family: monospace;
+      margin-top: 2rem;
+      transform: translateY(1.25rem);
     }
     .main-grid {
       display: flex;
@@ -121,6 +133,21 @@ const description =
       z-index: 10;
     }
     @media (min-width: 1024px) {
+      .bg-text-content {
+        flex-direction: row;
+        font-size: 25vw;
+        line-height: 1;
+        transform: scale(1, 3.5);
+        white-space: nowrap;
+      }
+      .header-logo {
+        margin-bottom: 0;
+      }
+      .footer {
+        font-size: 0.625rem;
+        margin-top: 0;
+        transform: none;
+      }
       .main-grid {
         flex-direction: row;
         gap: 4rem;
@@ -323,10 +350,13 @@ const description =
     class="wrapper animate-in fade-in slide-in-from-bottom-4 duration-1000 ease-out"
   >
     <div class="bg-text-container">
-      <span class="bg-text-content">山川輝樹</span>
+      <span class="bg-text-content">
+        <span>杉山</span>
+        <span>啓太</span>
+      </span>
     </div>
     <div class="header-logo">
-      <span class="header-sub">Server Analytics</span>
+      <span class="header-sub">サーバー分析</span>
       <h1 class="header-main">ymkw.top</h1>
     </div>
     <div class="main-grid">
@@ -335,10 +365,10 @@ const description =
         class="nav-card order-2 lg:order-1"
       >
         <div class="card-icon"><Calendar className="w-6 h-6" /></div>
-        <h2 class="card-title">Monthly Report</h2>
-        <p class="card-sub">{prevMonthYear}.{prevMonth} Report</p>
+        <h2 class="card-title">月間レポート</h2>
+        <p class="card-sub">{prevMonthYear}.{prevMonth} レポート</p>
         <span class="card-link"
-          >View Ranking <ArrowRight className="w-3 h-3" /></span
+          >ランキングを見る <ArrowRight className="w-3 h-3" /></span
         >
       </a>
       <div class="order-1 lg:order-2">
@@ -357,10 +387,10 @@ const description =
             <div class="card-icon">
               <History className="w-6 h-6" />
             </div>
-            <h2 class="card-title">All Time Best</h2>
-            <p class="card-sub">Snapshot #{latestSnapshotId}</p>
+            <h2 class="card-title">歴代ランキング</h2>
+            <p class="card-sub">スナップショット #{latestSnapshotId}</p>
             <span class="card-link">
-              View History <ArrowRight className="w-3 h-3" />
+              履歴を見る <ArrowRight className="w-3 h-3" />
             </span>
           </a>
         ) : (
@@ -368,15 +398,15 @@ const description =
             <div class="card-icon">
               <History className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h2 class="card-title text-muted-foreground">No Snapshots</h2>
-            <p class="card-sub">Waiting for generation...</p>
+            <h2 class="card-title text-muted-foreground">履歴なし</h2>
+            <p class="card-sub">生成待ちです</p>
             <span class="card-link text-muted-foreground border-transparent">
-              Not Available
+              利用できません
             </span>
           </a>
         )
       }
     </div>
-    <div class="footer"><p>© 2025 ymkw.top</p></div>
+    <div class="footer"><p>© 2026 ymkw.top</p></div>
   </div>
 </Layout>

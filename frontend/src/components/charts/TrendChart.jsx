@@ -176,7 +176,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     animate={{ opacity: 1, height: 42, y: 0 }}
                                     exit={{ opacity: 0, height: 0, y: -8 }}
                                     transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                                    className="relative w-full shrink-0 overflow-hidden md:w-48"
+                                    className="relative w-full shrink-0 overflow-visible md:w-48"
                                 >
                                     <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#545454]" />
                                     <input
