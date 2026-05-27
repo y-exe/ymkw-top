@@ -243,7 +243,7 @@ async def scan_message_source(pool, guild, channel, after_date, before_date, ind
 
         except discord.Forbidden:
             logger.error(f"Forbidden error in {format_channel_name(channel)}. Skipping.")
-            return processed, False
+            return processed, None
         except (discord.HTTPException, asyncio.TimeoutError, OSError) as e:
             retries += 1
             progress = await load_progress(pool, channel.id)
