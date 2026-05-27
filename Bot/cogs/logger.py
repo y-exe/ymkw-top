@@ -17,10 +17,12 @@ class Logger(commands.Cog):
                 channel_id BIGINT PRIMARY KEY,
                 name TEXT NOT NULL,
                 category_name TEXT,
+                category_id BIGINT,
                 position INTEGER,
                 is_active BOOLEAN DEFAULT TRUE
             );
             ALTER TABLE channels ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+            ALTER TABLE channels ADD COLUMN IF NOT EXISTS category_id BIGINT;
 
             CREATE TABLE IF NOT EXISTS messages (
                 message_id BIGINT PRIMARY KEY,
@@ -75,9 +77,11 @@ class Logger(commands.Cog):
 
         if category:
             category_name = category.name
+            category_id = category.id
             category_position = category.position
         else:
             category_name = "未分類"
+            category_id = None
             category_position = 999
 
         base_position = parent.position if parent else getattr(channel, "position", 999)
@@ -85,14 +89,15 @@ class Logger(commands.Cog):
         name = f"{parent.name} / {channel.name}" if parent else channel.name
 
         await self.pool.execute('''
-            INSERT INTO channels (channel_id, name, category_name, position, is_active)
-            VALUES ($1, $2, $3, $4, TRUE)
+            INSERT INTO channels (channel_id, name, category_name, category_id, position, is_active)
+            VALUES ($1, $2, $3, $4, $5, TRUE)
             ON CONFLICT (channel_id) DO UPDATE
             SET name = EXCLUDED.name,
                 category_name = EXCLUDED.category_name,
+                category_id = EXCLUDED.category_id,
                 position = EXCLUDED.position,
                 is_active = TRUE
-        ''', channel.id, name, category_name, position)
+        ''', channel.id, name, category_name, category_id, position)
         self.known_channel_ids.add(channel.id)
 
     @commands.Cog.listener()

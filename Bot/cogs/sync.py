@@ -17,10 +17,12 @@ class SyncData(commands.Cog):
                 channel_id BIGINT PRIMARY KEY,
                 name TEXT NOT NULL,
                 category_name TEXT,
+                category_id BIGINT,
                 position INTEGER,
                 is_active BOOLEAN DEFAULT TRUE
             );
             ALTER TABLE channels ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+            ALTER TABLE channels ADD COLUMN IF NOT EXISTS category_id BIGINT;
         ''')
 
         await pool.execute('''
@@ -66,24 +68,27 @@ class SyncData(commands.Cog):
 
                 if category:
                     cat_name = category.name
+                    cat_id = category.id
                     cat_pos = category.position
                 else:
                     cat_name = "未分類"
+                    cat_id = None
                     cat_pos = 999
 
                 base_position = parent.position if parent else getattr(channel, "position", 999)
                 sort_position = (cat_pos * 1000) + base_position
                 name = f"{parent.name} / {channel.name}" if parent else channel.name
-                channel_data.append((channel.id, name, cat_name, sort_position, True))
+                channel_data.append((channel.id, name, cat_name, cat_id, sort_position, True))
 
             await pool.execute("UPDATE channels SET is_active = FALSE")
             if channel_data:
                 await pool.executemany('''
-                    INSERT INTO channels (channel_id, name, category_name, position, is_active)
-                    VALUES ($1, $2, $3, $4, $5)
+                    INSERT INTO channels (channel_id, name, category_name, category_id, position, is_active)
+                    VALUES ($1, $2, $3, $4, $5, $6)
                     ON CONFLICT (channel_id) DO UPDATE 
                     SET name = EXCLUDED.name,
                         category_name = EXCLUDED.category_name,
+                        category_id = EXCLUDED.category_id,
                         position = EXCLUDED.position,
                         is_active = EXCLUDED.is_active
                 ''', channel_data)
