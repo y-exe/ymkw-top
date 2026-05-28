@@ -5,7 +5,7 @@ import { Users, BarChart3, MessageCircle, Zap, Hash } from 'lucide-react';
 export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
     if (!ranking || !overall) return null;
 
-    const uniqueUsers = ranking.length;
+    const uniqueUsers = overall.unique_users ?? ranking.length;
     const totalMsgs = overall.total;
     const share = ((totalMsgs / (prevOverall?.total || 1)) * 100).toFixed(1);
     const avgMsgs = uniqueUsers > 0 ? (totalMsgs / uniqueUsers).toFixed(1) : 0;

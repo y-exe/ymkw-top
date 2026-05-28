@@ -37,13 +37,14 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 const baseParamsStr = baseParams.toString();
                 const histParamsStr = histParams.toString();
 
-                const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes] = await Promise.all([
+                const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes, userRankRes] = await Promise.all([
                     fetchAPI(`/api/ranking/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
                     fetchAPI(`/api/stats/history/total${histParamsStr ? `?${histParamsStr}` : ''}`),
                     fetchAPI(`/api/stats/heatmap/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
                     fetchAPI(`/api/stats/analysis/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
                     userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/total?${baseParamsStr}${baseParamsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
+                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null),
+                    userId && userId !== 'guest' ? fetchAPI(`/api/users/${userId}/rank/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
                 ]);
 
                 const ranking = await rankRes.json();
@@ -59,8 +60,9 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 const personal = (personalRes && personalRes.ok) ? await personalRes.json() : null;
                 const pie = (pieRes && pieRes.ok) ? await pieRes.json() : [];
 
-                let myData = null;
-                if (userId && userId !== 'guest' && ranking.length > 0) {
+                const userRank = (userRankRes && userRankRes.ok) ? await userRankRes.json() : null;
+                let myData = userRank;
+                if (!myData && userId && userId !== 'guest' && ranking.length > 0) {
                     const idx = ranking.findIndex(r => String(r.user_id) === String(userId));
                     if (idx !== -1) myData = { ...ranking[idx], rank: idx + 1 };
                 }
@@ -93,7 +95,12 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
 
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="flex-1 min-w-0 space-y-6">
-                        <AnalysisPanel overall={data.overall} personal={data.personal} isPersonalAvailable={!!userId && userId !== 'guest'} personalAvatar={data.myData?.avatar} />
+                        <AnalysisPanel
+                            overall={data.overall}
+                            personal={data.personal}
+                            isPersonalAvailable={!!userId && userId !== 'guest'}
+                            personalAvatar={data.myData?.avatar || data.trend?.users?.[String(userId)]?.avatar}
+                        />
 
                         {data.myData && <StatsCard myData={data.myData} topUserCount={data.topUserCount} />}
 

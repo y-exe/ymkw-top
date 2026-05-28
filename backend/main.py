@@ -122,7 +122,7 @@ PRIVATE_CHAT_CATEGORY_IDS = [
 BOTTOM_CHANNEL_CATEGORY_IDS = {1355760969187463378}
 
 pool = None
-cache_dir = os.path.join(tempfile.gettempdir(), "ymkw_api_diskcache_v13")
+cache_dir = os.path.join(tempfile.gettempdir(), "ymkw_api_diskcache_v14")
 cache = diskcache.Cache(cache_dir)
 
 def get_cache(key: str):
@@ -320,6 +320,19 @@ class SnapshotItem(BaseModel):
 def format_ranking_response(rows):
     return [{"user_id": str(r["user_id"]), "display_name": r["display_name"] or "Unknown", "username": r["username"] or "unknown", "avatar": r["avatar_url"], "count": r["c"], "char_count": r["chars"] or 0} for r in rows]
 
+def format_user_rank_response(row):
+    if not row:
+        return None
+    return {
+        "user_id": str(row["user_id"]),
+        "display_name": row["display_name"] or "Unknown",
+        "username": row["username"] or "unknown",
+        "avatar": row["avatar_url"],
+        "count": row["c"],
+        "char_count": row["chars"] or 0,
+        "rank": row["rank"],
+    }
+
 def get_month_bounds(year: int, month: int) -> Tuple[datetime, datetime]:
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="month must be between 1 and 12")
@@ -478,6 +491,97 @@ async def get_total_ranking(response: Response, channel_id: Optional[int] = Quer
     query = f"SELECT m.user_id, count(*) as c, sum(m.char_count) as chars, u.display_name, u.username, u.avatar_url FROM messages m LEFT JOIN users u ON m.user_id = u.user_id WHERE {' AND '.join(f)} GROUP BY m.user_id, u.display_name, u.username, u.avatar_url ORDER BY c DESC LIMIT 100"
     rows = await pool.fetch(query, *p)
     res = format_ranking_response(rows)
+    set_cache(ckey, res, ttl=ttl)
+    return res
+
+@app.get("/api/users/{user_id}/rank/monthly/{year}/{month}")
+async def get_monthly_user_rank(user_id: int, year: int, month: int, response: Response, channel_id: Optional[int] = Query(None)):
+    ckey = f"user_rank_m_{user_id}_{year}_{month}_{channel_id}"
+    cached = get_cache(ckey)
+    response.headers["Cache-Control"] = "public, max-age=600"
+    if cached is not None:
+        return cached
+
+    start_date, end_date = get_month_bounds(year, month)
+    p = [start_date, end_date]
+    f = ["m.created_at >= $1", "m.created_at < $2", "m.is_bot = FALSE", DELETED_USER_FILTER]
+    add_channel_scope_filter(p, f, "m.channel_id", await get_channel_scope_ids(channel_id))
+    p.append(user_id)
+    target_param = f"${len(p)}"
+
+    query = f"""
+        WITH counts AS (
+            SELECT m.user_id, count(*) AS c, sum(m.char_count) AS chars
+            FROM messages m
+            LEFT JOIN users u ON m.user_id = u.user_id
+            WHERE {' AND '.join(f)}
+            GROUP BY m.user_id
+        ),
+        target AS (
+            SELECT user_id, c, chars
+            FROM counts
+            WHERE user_id = {target_param}
+        )
+        SELECT
+            t.user_id,
+            t.c,
+            t.chars,
+            u.display_name,
+            u.username,
+            u.avatar_url,
+            (SELECT count(*) + 1 FROM counts c2 WHERE c2.c > t.c)::int AS rank
+        FROM target t
+        LEFT JOIN users u ON t.user_id = u.user_id
+    """
+    row = await pool.fetchrow(query, *p)
+    res = format_user_rank_response(row)
+    set_cache(ckey, res, ttl=600)
+    return res
+
+@app.get("/api/users/{user_id}/rank/total")
+async def get_total_user_rank(user_id: int, response: Response, channel_id: Optional[int] = Query(None), end_date: Optional[datetime] = Query(None)):
+    ckey = f"user_rank_t_{user_id}_{channel_id}_{end_date}"
+    cached = get_cache(ckey)
+    ttl = 86400 if end_date else LIVE_TOTAL_CACHE_TTL
+    response.headers["Cache-Control"] = f"public, max-age={ttl}"
+    if cached is not None:
+        return cached
+
+    p = []
+    f = ["m.is_bot = FALSE", DELETED_USER_FILTER]
+    add_channel_scope_filter(p, f, "m.channel_id", await get_channel_scope_ids(channel_id))
+    if end_date:
+        p.append(end_date)
+        f.append(f"m.created_at <= ${len(p)}")
+    p.append(user_id)
+    target_param = f"${len(p)}"
+
+    query = f"""
+        WITH counts AS (
+            SELECT m.user_id, count(*) AS c, sum(m.char_count) AS chars
+            FROM messages m
+            LEFT JOIN users u ON m.user_id = u.user_id
+            WHERE {' AND '.join(f)}
+            GROUP BY m.user_id
+        ),
+        target AS (
+            SELECT user_id, c, chars
+            FROM counts
+            WHERE user_id = {target_param}
+        )
+        SELECT
+            t.user_id,
+            t.c,
+            t.chars,
+            u.display_name,
+            u.username,
+            u.avatar_url,
+            (SELECT count(*) + 1 FROM counts c2 WHERE c2.c > t.c)::int AS rank
+        FROM target t
+        LEFT JOIN users u ON t.user_id = u.user_id
+    """
+    row = await pool.fetchrow(query, *p)
+    res = format_user_rank_response(row)
     set_cache(ckey, res, ttl=ttl)
     return res
 
@@ -652,10 +756,21 @@ async def get_monthly_analysis(year: int, month: int, response: Response, channe
     where = " AND ".join(f)
     count = await pool.fetchrow(f"SELECT count(*) as total FROM messages WHERE {where}", *p)
     if not count or count['total'] == 0: return {"total": 0}
+    unique_where = where.replace('channel_id', 'm.channel_id').replace('created_at', 'm.created_at').replace('is_bot', 'm.is_bot').replace('user_id', 'm.user_id')
+    unique_users = await pool.fetchval(
+        f"""
+        SELECT count(DISTINCT m.user_id)
+        FROM messages m
+        LEFT JOIN users u ON m.user_id = u.user_id
+        WHERE {unique_where}
+          AND {DELETED_USER_FILTER}
+        """,
+        *p,
+    )
     max_d = await pool.fetchrow(f"SELECT DATE(created_at AT TIME ZONE 'Asia/Tokyo') as d, count(*) as c FROM messages WHERE {where} GROUP BY d ORDER BY c DESC LIMIT 1", *p)
     max_w = await pool.fetchrow(f"SELECT EXTRACT(DOW FROM created_at AT TIME ZONE 'Asia/Tokyo') as dow, count(*) as c FROM messages WHERE {where} GROUP BY dow ORDER BY c DESC LIMIT 1", *p)
     max_h = await pool.fetchrow(f"SELECT EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Tokyo') as h, count(*) as c FROM messages WHERE {where} GROUP BY h ORDER BY c DESC LIMIT 1", *p)
-    res = {"total": count['total'], "max_date": {"date": max_d['d'].strftime("%Y-%m-%d"), "count": max_d['c']} if max_d else None, "max_dow": {"dow": int(max_w['dow']), "count": max_w['c']} if max_w else None, "max_hour": {"hour": int(max_h['h']), "count": max_h['c']} if max_h else None}
+    res = {"total": count['total'], "unique_users": unique_users or 0, "max_date": {"date": max_d['d'].strftime("%Y-%m-%d"), "count": max_d['c']} if max_d else None, "max_dow": {"dow": int(max_w['dow']), "count": max_w['c']} if max_w else None, "max_hour": {"hour": int(max_h['h']), "count": max_h['c']} if max_h else None}
     set_cache(ckey, res, ttl=600)
     return res
 
@@ -673,10 +788,21 @@ async def get_total_analysis(response: Response, channel_id: Optional[int] = Que
     where = " AND ".join(f)
     count = await pool.fetchrow(f"SELECT count(*) as total FROM messages WHERE {where}", *p)
     if not count or count['total'] == 0: return {"total": 0}
+    unique_where = where.replace('channel_id', 'm.channel_id').replace('created_at', 'm.created_at').replace('is_bot', 'm.is_bot').replace('user_id', 'm.user_id')
+    unique_users = await pool.fetchval(
+        f"""
+        SELECT count(DISTINCT m.user_id)
+        FROM messages m
+        LEFT JOIN users u ON m.user_id = u.user_id
+        WHERE {unique_where}
+          AND {DELETED_USER_FILTER}
+        """,
+        *p,
+    )
     max_d = await pool.fetchrow(f"SELECT DATE(created_at AT TIME ZONE 'Asia/Tokyo') as d, count(*) as c FROM messages WHERE {where} GROUP BY d ORDER BY c DESC LIMIT 1", *p)
     max_w = await pool.fetchrow(f"SELECT EXTRACT(DOW FROM created_at AT TIME ZONE 'Asia/Tokyo') as dow, count(*) as c FROM messages WHERE {where} GROUP BY dow ORDER BY c DESC LIMIT 1", *p)
     max_h = await pool.fetchrow(f"SELECT EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Tokyo') as h, count(*) as c FROM messages WHERE {where} GROUP BY h ORDER BY c DESC LIMIT 1", *p)
-    res = {"total": count['total'], "max_date": {"date": max_d['d'].strftime("%Y-%m-%d"), "count": max_d['c']} if max_d else None, "max_dow": {"dow": int(max_w['dow']), "count": max_w['c']} if max_w else None, "max_hour": {"hour": int(max_h['h']), "count": max_h['c']} if max_h else None}
+    res = {"total": count['total'], "unique_users": unique_users or 0, "max_date": {"date": max_d['d'].strftime("%Y-%m-%d"), "count": max_d['c']} if max_d else None, "max_dow": {"dow": int(max_w['dow']), "count": max_w['c']} if max_w else None, "max_hour": {"hour": int(max_h['h']), "count": max_h['c']} if max_h else None}
     set_cache(ckey, res, ttl=ttl)
     return res
 
