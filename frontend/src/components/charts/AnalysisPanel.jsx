@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, Calendar, Clock, BarChart3 } from 'lucide-react';
+import { MessageCircle, Calendar, Clock, BarChart3, SearchX } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 
 const TEXT = {
@@ -50,6 +50,48 @@ function MobileStatItem({ icon: Icon, title, value, sub, colorClass = "text-[#11
 
 function Section({ title, data, iconSrc, isPersonal = false }) {
     if (!data || data.total === 0) {
+        if (isPersonal) {
+            return (
+                <>
+                <div className="relative rounded-xl border-2 border-white bg-white p-4 pt-8 text-center sm:hidden">
+                    {iconSrc && (
+                        <img
+                            src={iconSrc}
+                            alt=""
+                            className="absolute left-1/2 top-0 z-20 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover"
+                        />
+                    )}
+                    <div className="mb-4 flex justify-center">
+                        <div className="rounded-full bg-[#111F35] px-6 py-2 text-sm font-black leading-tight text-white">
+                            {title}
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-3 py-6">
+                        <div className="rounded-full bg-red-100 p-3">
+                            <SearchX className="h-5 w-5 text-red-500" />
+                        </div>
+                        <p className="text-base font-black leading-relaxed !text-[#111F35]" style={{ color: '#111F35' }}>
+                            このチャンネルにあなたのデータは<br />
+                            ありませんでした！！
+                        </p>
+                    </div>
+                </div>
+
+                <div className="relative hidden h-full min-h-[180px] items-center justify-center overflow-visible rounded-xl border-2 border-white bg-white p-6 text-center sm:flex">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="rounded-full bg-red-100 p-3">
+                            <SearchX className="h-5 w-5 text-red-500" />
+                        </div>
+                        <p className="text-base font-black leading-relaxed !text-[#111F35]" style={{ color: '#111F35' }}>
+                            このチャンネルにあなたのデータは<br />
+                            ありませんでした！！
+                        </p>
+                    </div>
+                </div>
+                </>
+            );
+        }
+
         return (
             <div className="flex h-full min-h-[180px] items-center justify-center rounded-xl border-2 border-dashed border-white/50 bg-white/12 p-6 text-center text-xs font-bold text-white/75">
                 {TEXT.noData}
