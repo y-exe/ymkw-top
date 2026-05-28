@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Users, BarChart3, MessageCircle, Zap, Hash } from 'lucide-react';
+import { Users, BarChart3, MessageCircle, Zap } from 'lucide-react';
 
 export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
     if (!ranking || !overall) return null;
@@ -15,16 +15,10 @@ export default function ChannelStatsCard({ ranking, overall, prevOverall }) {
 
     return (
         <Card className="h-full border-border bg-card flex flex-col overflow-hidden">
-            <CardHeader className="pb-4 border-b border-border/50 bg-muted/20">
+            <CardHeader className="pb-4 bg-muted/20">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                            <Hash className="w-4 h-4" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-lg font-black leading-none">チャンネル分析</CardTitle>
-                            <p className="text-[10px] font-bold text-muted-foreground mt-1 tracking-wider opacity-60">内部指標</p>
-                        </div>
+                        <CardTitle className="text-base font-bold text-foreground leading-none">チャンネル分析</CardTitle>
                     </div>
                 </div>
             </CardHeader>

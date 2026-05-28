@@ -4,7 +4,7 @@ import AnalysisPanel from './charts/AnalysisPanel';
 import StatsCard from './StatsCard';
 import TrendChart from './charts/TrendChart';
 import ActivityHeatmap from './charts/ActivityHeatmap';
-import ChannelPieChart from './charts/ChannelPieChart';
+import ChannelInsightSwitcher from './charts/ChannelInsightSwitcher';
 import ChannelStatsCard from './charts/ChannelStatsCard';
 import GrowthComparison from './charts/GrowthComparison';
 import RankingList from './RankingList';
@@ -125,7 +125,12 @@ export default function Dashboard({ year, month, channelId, userId }) {
                             <div className="xl:col-span-1 w-full min-w-0">
                                 <div className="h-full">
                                     {!channelId ? (
-                                        <ChannelPieChart data={data.pie} />
+                                        <ChannelInsightSwitcher
+                                            pieData={data.pie}
+                                            ranking={data.ranking}
+                                            overall={data.overall}
+                                            prevOverall={data.prevOverall}
+                                        />
                                     ) : (
                                         <ChannelStatsCard
                                             ranking={data.ranking}

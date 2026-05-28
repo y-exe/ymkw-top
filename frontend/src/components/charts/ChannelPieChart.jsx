@@ -39,7 +39,7 @@ export default function ChannelPieChart({ data }) {
 
   return (
     <div className="rounded-2xl bg-white p-5 h-full flex flex-col overflow-hidden">
-      <div className="w-full mb-3 flex-shrink-0">
+      <div className="mb-3 w-full flex-shrink-0 pr-28">
         <h3 className="text-base font-bold text-foreground leading-none">チャンネル分布</h3>
       </div>
 
@@ -86,13 +86,13 @@ export default function ChannelPieChart({ data }) {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col gap-1 justify-center min-w-0 pr-1 overflow-hidden h-full">
+        <div className="flex-1 flex flex-col gap-0.5 justify-center min-w-0 pr-2 overflow-hidden h-full">
           {data.slice(0, 8).map((d, i) => (
             <div key={d.name} className="flex items-center gap-2 min-w-0 group cursor-default py-0.5">
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
               <div className="flex flex-col min-w-0 flex-1 leading-tight">
-                <span className="text-[9px] font-bold text-muted-foreground uppercase truncate tracking-tight group-hover:text-foreground transition-colors">{d.name}</span>
-                <span className="text-[8px] font-black text-muted-foreground/30">{((d.value / total) * 100).toFixed(0)}%</span>
+                <span className="text-[8px] font-bold text-muted-foreground uppercase truncate tracking-tight group-hover:text-foreground transition-colors">{d.name}</span>
+                <span className="text-[7px] font-black text-muted-foreground/30">{((d.value / total) * 100).toFixed(0)}%</span>
               </div>
             </div>
           ))}
