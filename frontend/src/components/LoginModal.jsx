@@ -20,6 +20,13 @@ export default function LoginModal() {
         }
     }, []);
 
+    useEffect(() => {
+        const openLoginModal = () => setIsOpen(true);
+
+        window.addEventListener('ymkw:open-login-modal', openLoginModal);
+        return () => window.removeEventListener('ymkw:open-login-modal', openLoginModal);
+    }, []);
+
     if (!isOpen) return null;
 
     const handleSearch = async (e) => {
@@ -62,7 +69,6 @@ export default function LoginModal() {
     const handleSkip = () => {
         setCookie('user_id', 'guest');
         setIsOpen(false);
-        window.location.reload();
     };
 
     return (

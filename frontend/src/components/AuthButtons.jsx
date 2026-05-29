@@ -109,8 +109,7 @@ export function LogoutButton({ className = "" }) {
 
 export function LoginButton({ className = "" }) {
     const handleLogin = () => {
-        document.cookie = "user_id=; path=/; max-age=0";
-        location.reload();
+        window.dispatchEvent(new Event('ymkw:open-login-modal'));
     };
 
     return (

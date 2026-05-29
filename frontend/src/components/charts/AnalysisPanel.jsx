@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, Calendar, Clock, BarChart3, SearchX } from 'lucide-react';
+import { MessageCircle, Calendar, Clock, BarChart3, SearchX, LogIn } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 
 const TEXT = {
@@ -214,19 +214,53 @@ function Section({ title, data, iconSrc, isPersonal = false }) {
     );
 }
 
-export default function AnalysisPanel({ overall, personal, isPersonalAvailable, personalAvatar }) {
-    if (isPersonalAvailable) {
-        return (
-            <Card className="grid min-h-[220px] grid-cols-1 gap-6 rounded-2xl !bg-[#f8f8f8] p-5 !shadow-none lg:grid-cols-2">
-                <Section title={TEXT.all} data={overall} iconSrc="/ymkw.webp" />
-                <Section title={TEXT.personal} data={personal} iconSrc={personalAvatar} isPersonal={true} />
-            </Card>
-        );
-    }
+function LoginRequiredSection({ title }) {
+    const openLoginModal = () => {
+        window.dispatchEvent(new Event('ymkw:open-login-modal'));
+    };
+
+    const renderContent = (compact = false) => (
+        <div className={`flex flex-col items-center ${compact ? 'gap-2 py-0' : 'gap-3 py-6'}`}>
+            <div className={`rounded-full bg-blue-100 ${compact ? 'p-2.5' : 'p-3'}`}>
+                <LogIn className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />
+            </div>
+            <p className={`${compact ? 'text-sm leading-snug' : 'text-base leading-relaxed'} font-black !text-[#111F35]`} style={{ color: '#111F35' }}>
+                あなたはログインしてないため<br />
+                個人分析を見れません！！
+            </p>
+            <button
+                type="button"
+                onClick={openLoginModal}
+                className={`${compact ? 'mt-1 px-5 py-2 text-sm' : 'mt-1 px-6 py-2.5 text-sm'} inline-flex items-center gap-2 rounded-full bg-[#111F35] font-black text-white transition-transform hover:scale-105 active:scale-95`}
+            >
+                <LogIn className="h-4 w-4" />
+                ログイン
+            </button>
+        </div>
+    );
 
     return (
-        <Card className="grid min-h-[220px] grid-cols-1 gap-6 rounded-2xl !bg-[#f8f8f8] p-5 !shadow-none">
+        <>
+            <div className="relative rounded-xl border-2 border-white bg-white p-4 text-center sm:hidden">
+                {renderContent(true)}
+            </div>
+
+            <div className="relative hidden h-full min-h-[180px] items-center justify-center overflow-visible rounded-xl border-2 border-white bg-white p-4 text-center sm:flex">
+                {renderContent(true)}
+            </div>
+        </>
+    );
+}
+
+export default function AnalysisPanel({ overall, personal, isPersonalAvailable, personalAvatar }) {
+    return (
+        <Card className="grid min-h-[220px] grid-cols-1 gap-6 rounded-2xl !bg-[#f8f8f8] p-5 !shadow-none lg:grid-cols-2">
             <Section title={TEXT.all} data={overall} iconSrc="/ymkw.webp" />
+            {isPersonalAvailable ? (
+                <Section title={TEXT.personal} data={personal} iconSrc={personalAvatar} isPersonal={true} />
+            ) : (
+                <LoginRequiredSection title={TEXT.personal} />
+            )}
         </Card>
     );
 }

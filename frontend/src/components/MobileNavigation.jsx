@@ -38,6 +38,10 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
         window.location.reload();
     };
 
+    const handleLogin = () => {
+        window.dispatchEvent(new Event('ymkw:open-login-modal'));
+    };
+
     const categories = [];
     const grouped = {};
     if (Array.isArray(data.channels)) {
@@ -94,7 +98,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                                 )}
                             </button>
                         ) : (
-                            <button onClick={handleResetAuth} className="p-2 text-gray-400 focus:outline-none">
+                            <button onClick={handleLogin} className="p-2 text-gray-400 focus:outline-none">
                                 <LogIn className="w-5 h-5" />
                             </button>
                         )}
