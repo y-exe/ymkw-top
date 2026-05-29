@@ -6,20 +6,30 @@ const description =
 
 <Layout title="プライバシーポリシー" description={description}>
   <div class="max-w-4xl mx-auto py-16 px-6">
+    <div class="mb-12 flex flex-col items-center gap-7 text-center animate-fade-in">
+      <h1 class="text-2xl md:text-4xl font-black text-gray-900 font-outfit tracking-tight">
+        発言ランキングWeb 規約
+      </h1>
+
+      <div class="flex w-full max-w-sm rounded-xl bg-[#f8f8f8] p-1.5 text-xs font-black uppercase tracking-widest">
+        <a href="/terms" class="relative flex-1 rounded-lg px-6 py-3 text-[#545454] transition-colors hover:bg-[#545454]/10">
+          <span class="relative z-10">利用規約</span>
+        </a>
+        <a href="/privacy" class="relative flex-1 rounded-lg px-6 py-3 text-white transition-colors">
+          <span class="absolute inset-0 rounded-lg bg-[#545454]" style="view-transition-name: legal-active-tab;"></span>
+          <span class="relative z-10">ポリシー</span>
+        </a>
+      </div>
+    </div>
+
     <div
-      class="bg-white rounded-[3rem] border border-gray-200 shadow-sm p-8 md:p-16 animate-fade-in font-sans"
+      class="bg-[#f8f8f8] rounded-2xl p-6 md:p-12 animate-fade-in font-sans"
     >
-      <h1
-        class="text-4xl font-black text-gray-900 mb-4 font-outfit tracking-tight"
+      <h2
+        class="text-3xl font-black text-gray-900 mb-10 font-outfit tracking-tight"
       >
         プライバシーポリシー
-      </h1>
-      <div
-        class="flex gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-12 font-mono"
-      >
-        <span>発行: 2025.12.28</span>
-        <span>最終更新: 2025.12.28</span>
-      </div>
+      </h2>
 
       <div class="space-y-12 text-gray-600 leading-relaxed text-sm">
         <section>
@@ -30,10 +40,8 @@ const description =
 
         <section>
           <h2
-            class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"
-          >
-            <span class="w-1.5 h-6 bg-green-500 rounded-full"
-            ></span>第1条（収集する情報の種類と非収集の明記）
+            class="text-xl font-bold text-gray-900 mb-4"
+          >第1条（収集する情報の種類と非収集の明記）
           </h2>
           <div class="pl-4 space-y-4">
             <p>
@@ -59,10 +67,8 @@ const description =
 
         <section>
           <h2
-            class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"
-          >
-            <span class="w-1.5 h-6 bg-green-500 rounded-full"
-            ></span>第2条（Cookieおよびローカルストレージの技術的詳細）
+            class="text-xl font-bold text-gray-900 mb-4"
+          >第2条（Cookieおよびローカルストレージの技術的詳細）
           </h2>
           <div class="pl-4 space-y-4">
             <p>
@@ -84,10 +90,8 @@ const description =
 
         <section>
           <h2
-            class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"
-          >
-            <span class="w-1.5 h-6 bg-green-500 rounded-full"
-            ></span>第3条（データの保存期間とグローバル転送）
+            class="text-xl font-bold text-gray-900 mb-4"
+          >第3条（データの保存期間とグローバル転送）
           </h2>
           <div class="pl-4 space-y-4">
             <p>
@@ -101,10 +105,8 @@ const description =
 
         <section>
           <h2
-            class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"
-          >
-            <span class="w-1.5 h-6 bg-green-500 rounded-full"
-            ></span>第4条（世界中のユーザーの権利）
+            class="text-xl font-bold text-gray-900 mb-4"
+          >第4条（世界中のユーザーの権利）
           </h2>
           <div class="pl-4 space-y-4">
             <p>
@@ -129,10 +131,8 @@ const description =
 
         <section>
           <h2
-            class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"
-          >
-            <span class="w-1.5 h-6 bg-green-500 rounded-full"
-            ></span>第5条（データの安全性）
+            class="text-xl font-bold text-gray-900 mb-4"
+          >第5条（データの安全性）
           </h2>
           <p class="pl-4">
             当運営は、ディスクキャッシュの暗号化やアクセス制限など、適切な技術的・組織的安全管理措置を講じています。万が一データ侵害が発生した場合は、速やかに告知または適切な手段でユーザーに通知します。
@@ -141,10 +141,8 @@ const description =
 
         <section>
           <h2
-            class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3"
-          >
-            <span class="w-1.5 h-6 bg-green-500 rounded-full"
-            ></span>第6条（ポリシーの改定）
+            class="text-xl font-bold text-gray-900 mb-4"
+          >第6条（ポリシーの改定）
           </h2>
           <p class="pl-4">
             法規制の変化やサービス内容の更新に伴い、本ポリシーは随時改定されます。重要な変更がある場合は、サイト上またはDiscordサーバーを通じて告知します。

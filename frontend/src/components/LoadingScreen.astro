@@ -77,7 +77,13 @@
             show();
         }
 
-        document.addEventListener('astro:before-preparation', show);
+        const shouldShowForPath = (path) => path.includes('/month/') || path.includes('/open/');
+
+        document.addEventListener('astro:before-preparation', (event) => {
+            const to = event.to?.url || event.to;
+            const path = to ? new URL(to, window.location.href).pathname : window.location.pathname;
+            if (shouldShowForPath(path)) show();
+        });
         document.addEventListener('astro:after-swap', () => {
             if (!window.location.pathname.includes('/month/') && !window.location.pathname.includes('/open/')) {
                 hide();

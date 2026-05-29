@@ -68,3 +68,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+::view-transition-old(legal-active-tab),
+::view-transition-new(legal-active-tab) {
+  animation-duration: 460ms;
+  animation-timing-function: cubic-bezier(0.16, 1.35, 0.32, 1);
+}

@@ -189,9 +189,16 @@ if (breadcrumbs.length > 0) {
       <script>
         import NProgress from "nprogress";
         NProgress.configure({ showSpinner: false, speed: 400 });
-        document.addEventListener("astro:before-preparation", () =>
-          NProgress.start(),
-        );
+        const shouldShowProgress = (event) => {
+          const to = event.to?.url || event.to;
+          const path = to
+            ? new URL(to, window.location.href).pathname
+            : window.location.pathname;
+          return path.includes("/month/") || path.includes("/open/");
+        };
+        document.addEventListener("astro:before-preparation", (event) => {
+          if (shouldShowProgress(event)) NProgress.start();
+        });
         window.addEventListener("app-loaded", () => NProgress.done());
         document.addEventListener("astro:after-swap", () =>
           setTimeout(() => NProgress.done(), 8000),
