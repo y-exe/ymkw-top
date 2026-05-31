@@ -48,7 +48,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     }
 
     const pathParts = currentPath.split('/').filter(Boolean);
-    const pageMode = pathParts[0] === 'open' ? 'open' : 'month';
+    const pageMode = pathParts[0] === 'all' ? 'open' : 'month';
     const currentId = pathParts[1];
     const currentMonth = pathParts[2];
 
@@ -62,9 +62,9 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     const prevMonth = now.getMonth() + 1;
     const monthlyBaseUrl = `/month/${prevYear}/${prevMonth}`;
 
-    const allTimeUrl = '/open';
+    const allTimeUrl = '/all';
 
-    const isDashboard = currentPath.includes('/month/') || currentPath === '/open' || currentPath.includes('/open/');
+    const isDashboard = currentPath.includes('/month/') || currentPath === '/all';
     const dashboardBasePath = isDashboard ? currentPath.split('?')[0] : monthlyBaseUrl;
 
     return (

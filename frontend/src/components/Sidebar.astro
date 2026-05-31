@@ -5,7 +5,7 @@ const url = Astro.url;
 const currentPath = url.pathname;
 const queryParams = url.search;
 const pathParts = currentPath.split("/").filter(Boolean);
-const pageMode = pathParts[0] === "open" ? "open" : "month";
+const pageMode = pathParts[0] === "all" ? "open" : "month";
 const currentId = pathParts[1];
 const currentMonth = pathParts[2];
 ---

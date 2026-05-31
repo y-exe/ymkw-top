@@ -177,7 +177,7 @@ class Ranking(commands.Cog):
                 now_jst.year, 
                 now_jst.month, 
                 show_role_reward=False,
-                custom_url="https://ymkw.top/open"
+                custom_url="https://ymkw.top/all"
             )
             
             await interaction.channel.send(

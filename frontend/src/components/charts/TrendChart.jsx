@@ -86,9 +86,7 @@ const summarizeTotalBars = (data, enabled) => {
 
     for (let i = 0; i < data.length; i += groupSize) {
         const group = data.slice(i, i + groupSize);
-        const total = Math.round(
-            group.reduce((sum, item) => sum + (Number(item.total) || 0), 0) / group.length
-        );
+        const total = group.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
         const start = group[0]?.date || '';
         const end = group[group.length - 1]?.date || start;
 
@@ -319,7 +317,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                                     <XAxis
                                         dataKey="date"
-                                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800, fontFamily: 'JetBrains Mono' }}
+                                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800 }}
                                         tickFormatter={formatTotalDateTick}
                                         axisLine={false}
                                         tickLine={false}
@@ -328,7 +326,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800, fontFamily: 'JetBrains Mono' }}
+                                        tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800 }}
                                     />
                                     <Tooltip
                                         content={<CustomTooltip users={users} highlightUserId={highlightUserId} focusedUserId={focusedUserId} />}

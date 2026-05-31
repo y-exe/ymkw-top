@@ -30,7 +30,7 @@ export const GET = async () => {
       lastmod: new Date(Date.UTC(d.y, d.m, 0, 15, 0, 0)).toISOString()
     })),
     {
-      loc: `${SITE_URL}/open`,
+      loc: `${SITE_URL}/all`,
       priority: 0.8,
       changefreq: "daily",
       lastmod: new Date().toISOString()

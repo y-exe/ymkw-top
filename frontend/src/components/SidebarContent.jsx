@@ -40,9 +40,9 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
     const prevMonth = now.getMonth() + 1;
     const monthlyBaseUrl = `/month/${prevYear}/${prevMonth}`;
 
-    const allTimeUrl = '/open';
+    const allTimeUrl = '/all';
 
-    const isDashboard = currentPath.includes('/month/') || currentPath === '/open' || currentPath.includes('/open/');
+    const isDashboard = currentPath.includes('/month/') || currentPath === '/all';
     const dashboardBasePath = isDashboard ? currentPath.split('?')[0] : monthlyBaseUrl;
 
     return (

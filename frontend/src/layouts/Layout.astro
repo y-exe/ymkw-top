@@ -31,7 +31,7 @@ const queryParams = Astro.url.search;
 
 const parts = currentPath.split("/").filter(Boolean);
 const isDashboard =
-  currentPath.includes("/month/") || currentPath === "/open" || currentPath.includes("/open/");
+  currentPath.includes("/month/") || currentPath === "/all";
 
 const canonicalURL = new URL(
   Astro.url.pathname,
@@ -227,7 +227,7 @@ const extraJsonLd = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
           const path = to
             ? new URL(to, window.location.href).pathname
             : window.location.pathname;
-          return path.includes("/month/") || path === "/open" || path.includes("/open/");
+          return path.includes("/month/") || path === "/all";
         };
         document.addEventListener("astro:before-preparation", (event) => {
           if (shouldShowProgress(event)) NProgress.start();

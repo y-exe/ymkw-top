@@ -3,7 +3,6 @@ export const GET = async () => {
     "User-agent: *",
     "Allow: /",
     "Disallow: /error",
-    "Disallow: /no-snapshots",
     "Disallow: /404",
     "Disallow: /500",
     "",
