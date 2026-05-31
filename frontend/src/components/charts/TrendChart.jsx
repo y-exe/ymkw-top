@@ -102,12 +102,38 @@ const summarizeTotalBars = (data, enabled) => {
     return summarized;
 };
 
+const summarizeIndividualLines = (data, userIds, enabled) => {
+    if (!enabled || data.length <= 50) return data;
+
+    const groupSize = Math.ceil(data.length / 50);
+    const summarized = [];
+
+    for (let i = 0; i < data.length; i += groupSize) {
+        const group = data.slice(i, i + groupSize);
+        const start = group[0]?.date || '';
+        const end = group[group.length - 1]?.date || start;
+        const merged = {
+            ...group[group.length - 1],
+            date: start === end ? start : `${start}~${end}`,
+            total: group.reduce((sum, item) => sum + (Number(item.total) || 0), 0),
+        };
+
+        userIds.forEach((uid) => {
+            merged[uid] = group.reduce((sum, item) => sum + (Number(item[uid]) || 0), 0);
+        });
+
+        summarized.push(merged);
+    }
+
+    return summarized;
+};
+
 const formatTotalDateTick = (str = '') => {
     const start = str.split('~')[0] || str;
     return start.slice(5).replace('-', '/');
 };
 
-export default function TrendChart({ apiData, highlightUserId, focusedUserId, onSearchUser, compressTotalBars = false }) {
+export default function TrendChart({ apiData, highlightUserId, focusedUserId, onSearchUser, compressTotalBars = false, compressIndividualLines = false }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [mode, setMode] = useState('individual');
@@ -156,6 +182,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
         return patched;
     });
 
+    const individualChartData = summarizeIndividualLines(chart_data, userIdsInChart, compressIndividualLines);
     const totalChartData = summarizeTotalBars(chart_data, compressTotalBars);
     const totalBarValues = totalChartData.map((dayData) => Number(dayData.total) || 0);
     const maxTotal = Math.max(...totalBarValues);
@@ -268,7 +295,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                             >
                                 <ResponsiveContainer width="100%" height="100%">
                                     {mode === 'individual' ? (
-                                <LineChart data={chart_data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <LineChart data={individualChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
                                             <feGaussianBlur stdDeviation="4" result="blur" />
@@ -293,7 +320,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     <XAxis
                                         dataKey="date"
                                         tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800, fontFamily: 'JetBrains Mono' }}
-                                        tickFormatter={(str) => str.slice(5).replace('-', '/')}
+                                        tickFormatter={formatTotalDateTick}
                                         axisLine={false}
                                         tickLine={false}
                                         dy={10}

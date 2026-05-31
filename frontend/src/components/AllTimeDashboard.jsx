@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PageHeader from './PageHeader';
+import PageHeader, { ReportPeriodCard } from './PageHeader';
 import AnalysisPanel from './charts/AnalysisPanel';
 import StatsCard from './StatsCard';
 import TrendChart from './charts/TrendChart';
@@ -89,9 +89,15 @@ export default function AllTimeDashboard({ channelId, userId }) {
     return (
         <MouseEffectCard className="min-h-screen pb-32">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
+                <ReportPeriodCard
+                    title="All Time"
+                    subTitle="累計レポート"
+                    className="fixed left-4 top-28 z-30 shadow-sm md:left-[22rem] md:top-20"
+                />
                 <PageHeader
                     title="All Time"
                     subTitle="累計レポート"
+                    showPeriodCard={false}
                 />
 
                 <div className="flex flex-col lg:flex-row gap-8">
@@ -113,6 +119,7 @@ export default function AllTimeDashboard({ channelId, userId }) {
                                 focusedUserId={focusedUserId}
                                 onSearchUser={(id) => setFocusedUserId(id)}
                                 compressTotalBars
+                                compressIndividualLines
                             />
                         </div>
 
