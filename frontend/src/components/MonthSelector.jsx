@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Calendar } from 'lucide-react';
 import { navigate } from 'astro:transitions/client';
 
-export default function MonthSelector({ currentYear, currentMonth }) {
+export default function MonthSelector({ currentYear, currentMonth, dark = false }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const months = [];
@@ -25,24 +25,24 @@ export default function MonthSelector({ currentYear, currentMonth }) {
 
   return (
     <div className="relative">
-      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 block px-2">Target Period</label>
-      <button onClick={() => setIsOpen(!isOpen)} className="w-full bg-background border border-border text-foreground text-sm rounded-xl p-3 flex items-center justify-between hover:border-primary/50 transition-all shadow-sm focus:ring-2 focus:ring-ring outline-none">
-        <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground" /><span className="font-medium">{currentLabel}</span></div>
-        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      <label className={`text-[11px] font-bold uppercase tracking-wider mb-2 block px-2 ${dark ? 'text-white/35' : 'text-muted-foreground'}`}>Target Period</label>
+      <button onClick={() => setIsOpen(!isOpen)} className={`w-full text-sm rounded-xl p-3 flex items-center justify-between transition-all shadow-sm focus:ring-2 focus:ring-ring outline-none ${dark ? 'bg-white/6 border border-white/10 text-white hover:border-white/25' : 'bg-background border border-border text-foreground hover:border-primary/50'}`}>
+        <div className="flex items-center gap-2"><Calendar className={`w-4 h-4 ${dark ? 'text-white/45' : 'text-muted-foreground'}`} /><span className="font-medium">{currentLabel}</span></div>
+        <ChevronDown className={`w-4 h-4 transition-transform ${dark ? 'text-white/45' : 'text-muted-foreground'} ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 w-full mt-2 bg-popover border border-border rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-1 custom-scrollbar text-popover-foreground">
+          <div className={`absolute top-full left-0 w-full mt-2 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-1 custom-scrollbar ${dark ? 'bg-[#191b20] border border-white/10 text-white' : 'bg-popover border border-border text-popover-foreground'}`}>
             {months.length > 0 ? months.map((m) => {
               const isSelected = String(m.year) === String(currentYear) && String(m.month) === String(currentMonth);
               return (
-                <button key={`${m.year}-${m.month}`} onClick={() => handleSelect(m.year, m.month)} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between group ${isSelected ? 'bg-muted text-foreground font-bold' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}>
+                <button key={`${m.year}-${m.month}`} onClick={() => handleSelect(m.year, m.month)} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between group ${isSelected ? (dark ? 'bg-white text-gray-950 font-bold' : 'bg-muted text-foreground font-bold') : (dark ? 'text-white/55 hover:bg-white/8 hover:text-white' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground')}`}>
                   <span>{m.year}年 {m.month}月</span>
-                  {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>}
+                  {isSelected && <span className={`w-1.5 h-1.5 rounded-full ${dark ? 'bg-gray-950' : 'bg-primary'}`}></span>}
                 </button>
               );
-            }) : <div className="p-3 text-xs text-muted-foreground text-center">データがありません</div>}
+            }) : <div className={`p-3 text-xs text-center ${dark ? 'text-white/45' : 'text-muted-foreground'}`}>データがありません</div>}
           </div>
         </>
       )}

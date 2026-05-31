@@ -78,27 +78,27 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     return (
         <>
             <div className="fixed top-6 left-0 right-0 w-full z-[100] px-4 pointer-events-none flex justify-center">
-                <div className="w-full max-w-sm h-14 bg-white/95 backdrop-blur-lg border border-gray-200 rounded-full shadow-2xl flex items-center justify-between px-5 pointer-events-auto">
-                    <button onClick={() => setIsOpen(!isOpen)} className="p-2 -ml-2 text-gray-900 active:scale-90 transition-transform focus:outline-none">
+                <div className="w-full max-w-sm h-14 bg-[#101114]/95 backdrop-blur-lg border border-white/10 rounded-full shadow-2xl shadow-black/30 flex items-center justify-between px-5 pointer-events-auto">
+                    <button onClick={() => setIsOpen(!isOpen)} className="p-2 -ml-2 text-white active:scale-90 transition-transform focus:outline-none">
                         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
 
                     <a href="/" className="flex items-center gap-2">
-                        <img src="/ymkw.webp" className="w-7 h-7 rounded-lg shadow-sm" alt="Logo" />
-                        <span className="font-black text-xs uppercase tracking-tighter text-gray-900 font-outfit">ymkw.top</span>
+                        <img src="/ymkw.webp" className="w-7 h-7 rounded-lg border border-white/10 shadow-sm" alt="Logo" />
+                        <span className="text-xs font-black uppercase text-white" style={{ fontFamily: '"Google Sans", sans-serif' }}>ymkw.top</span>
                     </a>
 
                     <div className="w-9 flex justify-end">
                         {user?.id && user.id !== 'guest' ? (
                             <button onClick={() => setIsLogoutModalOpen(true)} className="active:scale-90 transition-transform focus:outline-none">
                                 {user.avatar ? (
-                                    <img src={user.avatar} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" />
+                                    <img src={user.avatar} className="w-8 h-8 rounded-full border border-white/20 shadow-sm" />
                                 ) : (
-                                    <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold uppercase italic">{user.name ? user.name[0] : 'U'}</div>
+                                    <div className="w-8 h-8 rounded-full bg-white text-gray-950 flex items-center justify-center text-[10px] font-bold uppercase italic">{user.name ? user.name[0] : 'U'}</div>
                                 )}
                             </button>
                         ) : (
-                            <button onClick={handleLogin} className="p-2 text-gray-400 focus:outline-none">
+                            <button onClick={handleLogin} className="p-2 text-white/70 active:scale-90 transition-transform focus:outline-none">
                                 <LogIn className="w-5 h-5" />
                             </button>
                         )}
@@ -124,30 +124,30 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
             {isOpen && (
                 <div className="fixed inset-0 z-[90] animate-fade-in">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-24 left-4 right-4 bottom-8 bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+                    <div className="absolute top-24 left-4 right-4 bottom-8 bg-[#101114] border border-white/10 rounded-[2.5rem] shadow-2xl shadow-black/40 flex flex-col overflow-hidden animate-slide-up">
                         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                            <div className="bg-gray-100 p-1 rounded-2xl flex mb-8 text-[10px] font-black uppercase tracking-widest border border-gray-200">
-                                <a href={monthlyBaseUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'month' ? 'bg-white shadow-sm text-black' : 'text-gray-400'}`}>月間</a>
-                                <a href={allTimeUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'open' ? 'bg-white shadow-sm text-black' : 'text-gray-400'}`}>累計</a>
+                            <div className="bg-white/8 p-1 rounded-2xl flex mb-8 text-[10px] font-black uppercase tracking-widest border border-white/10">
+                                <a href={monthlyBaseUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'month' ? 'bg-white text-black shadow-sm' : 'text-white/45'}`}>月間</a>
+                                <a href={allTimeUrl} className={`flex-1 py-3 text-center rounded-xl transition-all ${pageMode === 'open' ? 'bg-white text-black shadow-sm' : 'text-white/45'}`}>累計</a>
                             </div>
 
                             <div className="space-y-6">
-                                {pageMode === 'month' && <MonthSelector currentYear={currentId} currentMonth={currentMonth} />}
-                                {pageMode === 'open' && <SnapshotSelector snapshots={data.snapshots} currentId={currentId} />}
+                                {pageMode === 'month' && <MonthSelector currentYear={currentId} currentMonth={currentMonth} dark />}
+                                {pageMode === 'open' && <SnapshotSelector snapshots={data.snapshots} currentId={currentId} dark />}
 
                                 <nav className="space-y-6 pt-4 text-left">
-                                    <a href={dashboardBasePath} onClick={() => setIsOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold text-sm border transition-all ${isDashboard && !currentChannelId ? 'bg-gray-900 text-white border-gray-900 shadow-xl shadow-gray-200' : 'bg-gray-50 text-gray-500 border-transparent'}`}>
+                                    <a href={dashboardBasePath} onClick={() => setIsOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold text-sm border transition-all ${isDashboard && !currentChannelId ? 'bg-white text-gray-950 border-white shadow-xl shadow-black/20' : 'bg-white/6 text-white/65 border-white/8'}`}>
                                         <LayoutGrid className="w-5 h-5" /> 総合
                                     </a>
                                     {categories.map(cat => (
                                         <div key={cat} className="space-y-2">
-                                            <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-2">{cat}</h3>
+                                            <h3 className="text-[10px] font-black text-white/30 uppercase tracking-widest px-2">{cat}</h3>
                                             <div className="flex flex-col gap-1">
                                                 {grouped[cat].map(ch => {
                                                     const isActive = isDashboard && currentChannelId === String(ch.id);
                                                     return (
-                                                        <a key={ch.id} href={`${dashboardBasePath}?channel=${ch.id}`} onClick={() => setIsOpen(false)} className={`flex items-center gap-3 p-3 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-500'}`}>
-                                                            <Hash className={`w-4 h-4 ${isActive ? 'text-blue-400' : 'text-gray-200'}`} /> {ch.name}
+                                                        <a key={ch.id} href={`${dashboardBasePath}?channel=${ch.id}`} onClick={() => setIsOpen(false)} className={`flex items-center gap-3 p-3 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-gray-950' : 'text-white/60 hover:bg-white/8 hover:text-white'}`}>
+                                                            <Hash className={`w-4 h-4 ${isActive ? 'text-gray-950' : 'text-white/25'}`} /> {ch.name}
                                                         </a>
                                                     );
                                                 })}
