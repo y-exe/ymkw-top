@@ -20,7 +20,7 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
 
         const fetchAllData = async () => {
             try {
-                const infoRes = await fetchAPI(`/api/snapshots/${snapshotId}`);
+                const infoRes = await fetchAPI(`/snapshots/${snapshotId}`);
                 if (!infoRes.ok) throw new Error("Snapshot not found");
                 const info = await infoRes.json();
                 setSnapshotInfo(info);
@@ -38,13 +38,13 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
                 const histParamsStr = histParams.toString();
 
                 const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes, userRankRes] = await Promise.all([
-                    fetchAPI(`/api/ranking/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
-                    fetchAPI(`/api/stats/history/total${histParamsStr ? `?${histParamsStr}` : ''}`),
-                    fetchAPI(`/api/stats/heatmap/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
-                    fetchAPI(`/api/stats/analysis/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
-                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/total?${baseParamsStr}${baseParamsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetchAPI(`/api/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null),
-                    userId && userId !== 'guest' ? fetchAPI(`/api/users/${userId}/rank/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
+                    fetchAPI(`/ranking/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    fetchAPI(`/stats/history/total${histParamsStr ? `?${histParamsStr}` : ''}`),
+                    fetchAPI(`/stats/heatmap/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    fetchAPI(`/stats/analysis/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/stats/analysis/total?${baseParamsStr}${baseParamsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null),
+                    userId && userId !== 'guest' ? fetchAPI(`/users/${userId}/rank/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
                 ]);
 
                 const ranking = await rankRes.json();

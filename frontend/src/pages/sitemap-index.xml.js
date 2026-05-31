@@ -5,7 +5,7 @@ export const GET = async () => {
 
   let snapshots = [];
   try {
-    const res = await fetchAPI("/api/snapshots");
+    const res = await fetchAPI("/snapshots");
     if (res.ok) {
       snapshots = await res.json();
     }

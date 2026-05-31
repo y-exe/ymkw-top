@@ -13,8 +13,8 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
         const fetchNavData = async () => {
             try {
                 const [cRes, sRes] = await Promise.all([
-                    fetchAPI("/api/channels"),
-                    fetchAPI("/api/snapshots")
+                    fetchAPI("/channels"),
+                    fetchAPI("/snapshots")
                 ]);
                 setData({
                     channels: await cRes.json(),

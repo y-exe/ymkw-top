@@ -37,14 +37,14 @@ export default function Dashboard({ year, month, channelId, userId }) {
                 const histParamsStr = histParams.toString();
 
                 const responses = await Promise.all([
-                    fetchAPI(`/api/ranking/monthly/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
-                    fetchAPI(`/api/stats/history/${year}/${month}${histParamsStr ? `?${histParamsStr}` : ''}`),
-                    fetchAPI(`/api/stats/heatmap/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
-                    fetchAPI(`/api/stats/analysis/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
-                    fetchAPI(`/api/stats/analysis/${prevYear}/${prevMonth}${paramsStr ? `?${paramsStr}` : ''}`),
-                    userId && userId !== 'guest' ? fetchAPI(`/api/stats/analysis/${year}/${month}?${paramsStr}${paramsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
-                    !channelId ? fetchAPI(`/api/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null),
-                    userId && userId !== 'guest' ? fetchAPI(`/api/users/${userId}/rank/monthly/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`) : Promise.resolve(null)
+                    fetchAPI(`/ranking/monthly/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/stats/history/${year}/${month}${histParamsStr ? `?${histParamsStr}` : ''}`),
+                    fetchAPI(`/stats/heatmap/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/stats/analysis/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`),
+                    fetchAPI(`/stats/analysis/${prevYear}/${prevMonth}${paramsStr ? `?${paramsStr}` : ''}`),
+                    userId && userId !== 'guest' ? fetchAPI(`/stats/analysis/${year}/${month}?${paramsStr}${paramsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
+                    !channelId ? fetchAPI(`/stats/channels_distribution/${year}/${month}`) : Promise.resolve(null),
+                    userId && userId !== 'guest' ? fetchAPI(`/users/${userId}/rank/monthly/${year}/${month}${paramsStr ? `?${paramsStr}` : ''}`) : Promise.resolve(null)
                 ]);
 
                 const [rankRes, trendRes, heatmapRes, overallRes, prevOverallRes, personalRes, pieRes, userRankRes] = responses;

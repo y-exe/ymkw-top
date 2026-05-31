@@ -83,7 +83,7 @@ class SnapshotDeleteSelect(discord.ui.Select):
             return await interaction.response.send_message("選択が無効です", ephemeral=True)
 
         async with aiohttp.ClientSession() as session:
-            async with session.delete(f'https://api.ymkw.top/api/snapshots/{snapshot_id}', headers=API_HEADERS) as resp:
+            async with session.delete(f'https://api.ymkw.top/snapshots/{snapshot_id}', headers=API_HEADERS) as resp:
                 if resp.status == 200:
                     await interaction.response.send_message(f"🗑️ スナップショット #{snapshot_id} を削除しました。", ephemeral=True)
                 else:
@@ -215,7 +215,7 @@ class Ranking(commands.Cog):
                 
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        'https://api.ymkw.top/api/snapshots', 
+                        'https://api.ymkw.top/snapshots', 
                         json={"title": snapshot_data["title"], "data": snapshot_data},
                         headers=API_HEADERS
                     ) as resp:
@@ -259,7 +259,7 @@ class Ranking(commands.Cog):
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get('https://api.ymkw.top/api/snapshots') as resp:
+                async with session.get('https://api.ymkw.top/snapshots') as resp:
                     if resp.status != 200:
                         return await interaction.followup.send("APIエラー: スナップショット一覧を取得できませんでした。")
                     snapshots = await resp.json()

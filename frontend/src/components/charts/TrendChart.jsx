@@ -96,7 +96,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
         const delayDebounceFn = setTimeout(async () => {
             if (searchTerm.trim().length > 0) {
                 try {
-                    const res = await fetchAPI(`/api/users/search?q=${encodeURIComponent(searchTerm)}`);
+                    const res = await fetchAPI(`/users/search?q=${encodeURIComponent(searchTerm)}`);
                     if (res.ok) setSearchResults(await res.json());
                 } catch (e) { console.error(e); }
             } else { setSearchResults([]); }

@@ -17,7 +17,7 @@ const channelId = url.searchParams.get("channel");
 let channelName = "すべてのチャンネル";
 if (channelId) {
   try {
-    const res = await fetchAPI("/api/channels");
+    const res = await fetchAPI("/channels");
     if (res.ok) {
       const channels: any[] = await res.json();
       const found = channels.find(

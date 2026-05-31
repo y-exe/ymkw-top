@@ -36,7 +36,7 @@ export default function LoginModal() {
         if (val.length > 0) {
             setLoading(true);
             try {
-                const res = await fetchAPI(`/api/users/search?q=${encodeURIComponent(val)}`);
+                const res = await fetchAPI(`/users/search?q=${encodeURIComponent(val)}`);
                 if (res.ok) {
                     const data = await res.json();
                     setResults(data);

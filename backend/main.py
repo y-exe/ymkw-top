@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Response, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
 import aiohttp
@@ -184,11 +184,48 @@ def cors_json_response(request: Request, status_code: int, content: dict, block_
         response.headers["X-Debug-Block"] = block_reason
     return response
 
-RATE_LIMIT_WINDOW = 10
-MAX_REQUESTS = 150
-BLOCK_DURATION = 600
+PUBLIC_PATHS = {"/", "/health", "/docs", "/openapi.json", "/favicon.ico"}
+WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+DB_HEAVY_PREFIXES = ("/ranking", "/stats", "/users", "/snapshots")
+
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "10"))
+MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "60"))
+BOT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_BOT_MAX_REQUESTS", "300"))
+DB_RATE_LIMIT_WINDOW = int(os.getenv("DB_RATE_LIMIT_WINDOW", "60"))
+DB_MAX_REQUESTS = int(os.getenv("DB_RATE_LIMIT_MAX_REQUESTS", "45"))
+DB_BOT_MAX_REQUESTS = int(os.getenv("DB_RATE_LIMIT_BOT_MAX_REQUESTS", "180"))
+BLOCK_DURATION = int(os.getenv("RATE_LIMIT_BLOCK_DURATION", "600"))
 LIVE_TOTAL_CACHE_TTL = 1800
 TOTAL_CACHE_WARM_INTERVAL = 600
+
+def get_client_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip()
+    return (
+        request.headers.get("CF-Connecting-IP")
+        or forwarded_for
+        or (request.client.host if request.client else "unknown")
+    )
+
+def is_db_heavy_path(path: str) -> bool:
+    return path.startswith(DB_HEAVY_PREFIXES)
+
+def rate_limit_check(client_ip: str, scope: str, limit: int, window: int) -> bool:
+    count_key = f"rate_limit:{scope}:{client_ip}"
+    current_data = cache.get(count_key)
+    now = time.time()
+
+    if current_data:
+        first_req_time, count = current_data
+        if now - first_req_time < window:
+            new_count = count + 1
+            if new_count > limit:
+                return False
+            ttl = max(1, window - (now - first_req_time))
+            cache.set(count_key, (first_req_time, new_count), expire=ttl)
+            return True
+
+    cache.set(count_key, (now, 1), expire=window)
+    return True
 
 @app.middleware("http")
 async def security_and_rate_limit_middleware(request: Request, call_next):
@@ -212,38 +249,34 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
         except:
             pass
     
+    path = request.url.path
+    is_public_path = path in PUBLIC_PATHS
     is_website = is_allowed_origin or is_allowed_referer
-    is_ssr_request = request.method == "GET" and not origin and not referer
 
-    if not (is_bot or is_website or is_ssr_request):
-        if request.url.path not in ["/", "/api", "/docs", "/openapi.json", "/favicon.ico"]:
+    if request.method in WRITE_METHODS and not is_bot and not is_public_path:
+        return cors_json_response(request, status_code=401, content={"detail": "API key required."}, block_reason="write-api-key-required")
+
+    if not (is_bot or is_website or is_public_path):
+        if path not in PUBLIC_PATHS:
             logger.warning(f"Access Denied: Origin={origin}, Referer={referer}, Path={request.url.path}")
             return cors_json_response(request, status_code=403, content={"detail": "Access Denied: Origin/Referer not allowed."}, block_reason="security-policy")
 
-    client_ip = request.headers.get("CF-Connecting-IP") or request.client.host
+    client_ip = get_client_ip(request)
     
     block_key = f"blocked:{client_ip}"
     if cache.get(block_key):
         return cors_json_response(request, status_code=429, content={"detail": "Too Many Requests. Blocked for 10 minutes."}, block_reason="rate-limit-active")
 
-    count_key = f"rate_limit:{client_ip}"
-    current_data = cache.get(count_key)
-    now = time.time()
-    
-    if current_data:
-        first_req_time, count = current_data
-        if now - first_req_time < RATE_LIMIT_WINDOW:
-            new_count = count + 1
-            if new_count > MAX_REQUESTS:
-                cache.set(block_key, True, expire=BLOCK_DURATION)
-                return cors_json_response(request, status_code=429, content={"detail": "Too Many Requests. Blocked for 10 minutes."}, block_reason="rate-limit-exceeded")
-            else:
-                ttl = max(1, RATE_LIMIT_WINDOW - (now - first_req_time))
-                cache.set(count_key, (first_req_time, new_count), expire=ttl)
-        else:
-            cache.set(count_key, (now, 1), expire=RATE_LIMIT_WINDOW)
-    else:
-        cache.set(count_key, (now, 1), expire=RATE_LIMIT_WINDOW)
+    request_limit = BOT_MAX_REQUESTS if is_bot else MAX_REQUESTS
+    if not rate_limit_check(client_ip, "request", request_limit, RATE_LIMIT_WINDOW):
+        cache.set(block_key, True, expire=BLOCK_DURATION)
+        return cors_json_response(request, status_code=429, content={"detail": "Too Many Requests. Blocked for 10 minutes."}, block_reason="rate-limit-exceeded")
+
+    if not is_public_path and is_db_heavy_path(path):
+        db_limit = DB_BOT_MAX_REQUESTS if is_bot else DB_MAX_REQUESTS
+        if not rate_limit_check(client_ip, "db", db_limit, DB_RATE_LIMIT_WINDOW):
+            cache.set(block_key, True, expire=BLOCK_DURATION)
+            return cors_json_response(request, status_code=429, content={"detail": "Too Many Requests. Blocked for 10 minutes."}, block_reason="db-rate-limit-exceeded")
 
     try:
         response = await call_next(request)
@@ -387,11 +420,14 @@ def add_channel_scope_filter(params: List[Any], filters: List[str], column: str,
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
 @app.get("/")
-@app.get("/api")
 async def root():
-    return {"status": "ok", "message": "ymkw.top API is running. Use /api/channels etc."}
+    return PlainTextResponse("ymkw.top API by yexe")
 
-@app.get("/api/channels", response_model=List[ChannelItem])
+@app.get("/health")
+async def health():
+    return PlainTextResponse("ok")
+
+@app.get("/channels", response_model=List[ChannelItem])
 async def get_channels(response: Response):
     ckey = "channels_list"
     cached = get_cache(ckey)
@@ -416,7 +452,7 @@ async def get_channels(response: Response):
     set_cache(ckey, res, ttl=3600)
     return res
 
-@app.get("/api/snapshots")
+@app.get("/snapshots")
 async def get_snapshots_list(response: Response):
     ckey = "snapshots_list"
     cached = get_cache(ckey)
@@ -427,7 +463,7 @@ async def get_snapshots_list(response: Response):
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.post("/api/snapshots")
+@app.post("/snapshots")
 async def create_snapshot(snapshot: SnapshotCreate):
     try:
         data_str = json.dumps(snapshot.data)
@@ -437,7 +473,7 @@ async def create_snapshot(snapshot: SnapshotCreate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/snapshots/{snapshot_id}")
+@app.get("/snapshots/{snapshot_id}")
 async def get_snapshot(snapshot_id: int, response: Response):
     response.headers["Cache-Control"] = "public, max-age=3600"
     row = await pool.fetchrow("SELECT snapshot_id, created_at, title, data FROM snapshots WHERE snapshot_id = $1", snapshot_id)
@@ -446,14 +482,14 @@ async def get_snapshot(snapshot_id: int, response: Response):
     if isinstance(s_data, str): s_data = json.loads(s_data)
     return {"snapshot_id": row['snapshot_id'], "title": row['title'], "created_at": row['created_at'], "data": s_data}
 
-@app.delete("/api/snapshots/{snapshot_id}")
+@app.delete("/snapshots/{snapshot_id}")
 async def delete_snapshot(snapshot_id: int):
     result = await pool.execute("DELETE FROM snapshots WHERE snapshot_id = $1", snapshot_id)
     if result == "DELETE 0": raise HTTPException(status_code=404, detail="Not found")
     cache.delete("snapshots_list")
     return {"status": "deleted"}
 
-@app.get("/api/users/search")
+@app.get("/users/search")
 async def search_users(q: str):
     search_query = q.strip()
     if not search_query: return []
@@ -461,7 +497,7 @@ async def search_users(q: str):
     rows = await pool.fetch(query, f"%{search_query}%")
     return [{"user_id": str(r['user_id']), "display_name": r['display_name'], "username": r['username'], "avatar": r['avatar_url']} for r in rows]
 
-@app.get("/api/ranking/monthly/{year}/{month}", response_model=List[RankingItem])
+@app.get("/ranking/monthly/{year}/{month}", response_model=List[RankingItem])
 async def get_monthly_ranking(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None)):
     ckey = f"rank_m_{year}_{month}_{channel_id}"
     cached = get_cache(ckey)
@@ -478,7 +514,7 @@ async def get_monthly_ranking(year: int, month: int, response: Response, channel
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.get("/api/ranking/total", response_model=List[RankingItem])
+@app.get("/ranking/total", response_model=List[RankingItem])
 async def get_total_ranking(response: Response, channel_id: Optional[int] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"rank_t_{channel_id}_{end_date}"
     cached = get_cache(ckey)
@@ -494,7 +530,7 @@ async def get_total_ranking(response: Response, channel_id: Optional[int] = Quer
     set_cache(ckey, res, ttl=ttl)
     return res
 
-@app.get("/api/users/{user_id}/rank/monthly/{year}/{month}")
+@app.get("/users/{user_id}/rank/monthly/{year}/{month}")
 async def get_monthly_user_rank(user_id: int, year: int, month: int, response: Response, channel_id: Optional[int] = Query(None)):
     ckey = f"user_rank_m_{user_id}_{year}_{month}_{channel_id}"
     cached = get_cache(ckey)
@@ -538,7 +574,7 @@ async def get_monthly_user_rank(user_id: int, year: int, month: int, response: R
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.get("/api/users/{user_id}/rank/total")
+@app.get("/users/{user_id}/rank/total")
 async def get_total_user_rank(user_id: int, response: Response, channel_id: Optional[int] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"user_rank_t_{user_id}_{channel_id}_{end_date}"
     cached = get_cache(ckey)
@@ -585,7 +621,7 @@ async def get_total_user_rank(user_id: int, response: Response, channel_id: Opti
     set_cache(ckey, res, ttl=ttl)
     return res
 
-@app.get("/api/stats/history/{year}/{month}")
+@app.get("/stats/history/{year}/{month}")
 async def get_daily_history(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[List[str]] = Query(None)):
     ckey = f"hist_m_{year}_{month}_{channel_id}_{user_id}"
     cached = get_cache(ckey)
@@ -621,7 +657,7 @@ async def get_daily_history(year: int, month: int, response: Response, channel_i
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.get("/api/stats/history/total")
+@app.get("/stats/history/total")
 async def get_total_history(response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[List[str]] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"hist_t_{channel_id}_{user_id}_{end_date}"
     cached = get_cache(ckey)
@@ -654,7 +690,7 @@ async def get_total_history(response: Response, channel_id: Optional[int] = Quer
     set_cache(ckey, res, ttl=ttl)
     return res
 
-@app.get("/api/stats/heatmap/{year}/{month}")
+@app.get("/stats/heatmap/{year}/{month}")
 async def get_monthly_heatmap(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None)):
     ckey = f"heat_m_{year}_{month}_{channel_id}"
     cached = get_cache(ckey)
@@ -668,7 +704,7 @@ async def get_monthly_heatmap(year: int, month: int, response: Response, channel
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.get("/api/stats/heatmap/total")
+@app.get("/stats/heatmap/total")
 async def get_total_heatmap(response: Response, channel_id: Optional[int] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"heat_t_{channel_id}_{end_date}"
     cached = get_cache(ckey)
@@ -683,7 +719,7 @@ async def get_total_heatmap(response: Response, channel_id: Optional[int] = Quer
     set_cache(ckey, res, ttl=ttl)
     return res
 
-@app.get("/api/stats/channels_distribution/{year}/{month}")
+@app.get("/stats/channels_distribution/{year}/{month}")
 async def get_monthly_channel_distribution(year: int, month: int, response: Response):
     ckey = f"pie_m_{year}_{month}"
     cached = get_cache(ckey)
@@ -713,7 +749,7 @@ async def get_monthly_channel_distribution(year: int, month: int, response: Resp
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.get("/api/stats/channels_distribution/total")
+@app.get("/stats/channels_distribution/total")
 async def get_total_channel_distribution(response: Response, end_date: Optional[datetime] = Query(None)):
     ckey = f"pie_t_{end_date}"
     cached = get_cache(ckey)
@@ -743,7 +779,7 @@ async def get_total_channel_distribution(response: Response, end_date: Optional[
     set_cache(ckey, res, ttl=ttl)
     return res
 
-@app.get("/api/stats/analysis/{year}/{month}")
+@app.get("/stats/analysis/{year}/{month}")
 async def get_monthly_analysis(year: int, month: int, response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[str] = Query(None)):
     ckey = f"ana_m_{year}_{month}_{channel_id}_{user_id}"
     cached = get_cache(ckey)
@@ -774,7 +810,7 @@ async def get_monthly_analysis(year: int, month: int, response: Response, channe
     set_cache(ckey, res, ttl=600)
     return res
 
-@app.get("/api/stats/analysis/total")
+@app.get("/stats/analysis/total")
 async def get_total_analysis(response: Response, channel_id: Optional[int] = Query(None), user_id: Optional[str] = Query(None), end_date: Optional[datetime] = Query(None)):
     ckey = f"ana_t_{channel_id}_{user_id}_{end_date}"
     cached = get_cache(ckey)
@@ -833,7 +869,7 @@ async def warm_total_cache_loop():
         await warm_total_cache_once()
         await asyncio.sleep(TOTAL_CACHE_WARM_INTERVAL)
 
-@app.get("/api/debug/db")
+@app.get("/debug/db")
 async def debug_db():
     if not pool:
         return {"status": "error", "message": "Connection pool not initialized"}
@@ -872,7 +908,7 @@ async def debug_db():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-@app.get("/api/debug/clear-cache")
+@app.get("/debug/clear-cache")
 async def clear_app_cache():
     cache.clear()
     return {"status": "cache cleared"}

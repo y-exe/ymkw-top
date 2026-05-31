@@ -8,7 +8,7 @@ export const prerender = false;
 let latestSnapshotId = null;
 
 try {
-  const res = await fetchAPI("/api/snapshots");
+  const res = await fetchAPI("/snapshots");
   if (res.ok) {
     const list = await res.json();
     if (Array.isArray(list) && list.length > 0) {

@@ -12,8 +12,8 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
         const fetchSidebarData = async () => {
             try {
                 const [cRes, sRes] = await Promise.all([
-                    fetchAPI("/api/channels"),
-                    fetchAPI("/api/snapshots")
+                    fetchAPI("/channels"),
+                    fetchAPI("/snapshots")
                 ]);
                 setData({ channels: await cRes.json(), snapshots: await sRes.json() });
             } catch (e) { console.error(e); }
