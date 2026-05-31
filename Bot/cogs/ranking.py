@@ -74,6 +74,7 @@ class Ranking(commands.Cog):
 
         container.add_item(ui.TextDisplay(f"# {title}"))
         container.add_item(ui.TextDisplay(f"-# <#{EXCLUDE_CHANNEL_ID}>はランキングに含まれません"))
+        container.add_item(ui.TextDisplay("-# <:4_:1453234089980334255> **プラチャ内の発言もカウントされます。**"))
 
         top_user_id = None
         for i, row in enumerate(rows):
@@ -113,6 +114,14 @@ class Ranking(commands.Cog):
                 label="WEBで詳しく見る",
                 style=discord.ButtonStyle.url,
                 url=target_url,
+                emoji="<:3_:1453234036339245249>"
+            )
+        )
+        action_row.add_item(
+            ui.Button(
+                label="全期間のデータを見る",
+                style=discord.ButtonStyle.url,
+                url="https://ymkw.top/all",
                 emoji="<:3_:1453234036339245249>"
             )
         )

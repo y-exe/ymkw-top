@@ -79,13 +79,13 @@ export default function LoginModal() {
                         <img src="/ranking.webp" alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover shadow-sm" />
                         <div className="min-w-0">
                             <p
-                                className="text-xl font-black text-foreground"
+                                className="text-sm md:text-xl font-black text-foreground whitespace-nowrap"
                                 style={{ fontFamily: '"Noto Sans JP", "Noto Sans Japanese", sans-serif', fontWeight: 900 }}
                             >
                                 発言ランキングWeb ログイン
                             </p>
                             <p
-                                className="mt-1 text-sm font-bold text-gray-500"
+                                className="mt-1 text-xs md:text-sm font-bold text-gray-500 whitespace-nowrap"
                                 style={{ fontFamily: '"Noto Sans JP", "Noto Sans Japanese", sans-serif' }}
                             >
                                 個人分析、過去のデータ、詳しいランキング等
