@@ -78,7 +78,36 @@ const getTotalBarColor = (value, maxTotal, sortedNonMaxTotals) => {
     return TOTAL_BAR_COLORS[colorIndex];
 };
 
-export default function TrendChart({ apiData, highlightUserId, focusedUserId, onSearchUser }) {
+const summarizeTotalBars = (data, enabled) => {
+    if (!enabled || data.length <= 50) return data;
+
+    const groupSize = Math.max(3, Math.ceil(data.length / 50));
+    const summarized = [];
+
+    for (let i = 0; i < data.length; i += groupSize) {
+        const group = data.slice(i, i + groupSize);
+        const total = Math.round(
+            group.reduce((sum, item) => sum + (Number(item.total) || 0), 0) / group.length
+        );
+        const start = group[0]?.date || '';
+        const end = group[group.length - 1]?.date || start;
+
+        summarized.push({
+            ...group[group.length - 1],
+            date: start === end ? start : `${start}~${end}`,
+            total,
+        });
+    }
+
+    return summarized;
+};
+
+const formatTotalDateTick = (str = '') => {
+    const start = str.split('~')[0] || str;
+    return start.slice(5).replace('-', '/');
+};
+
+export default function TrendChart({ apiData, highlightUserId, focusedUserId, onSearchUser, compressTotalBars = false }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [mode, setMode] = useState('individual');
@@ -127,9 +156,10 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
         return patched;
     });
 
-    const totalValues = chart_data.map((dayData) => Number(dayData.total) || 0);
-    const maxTotal = Math.max(...totalValues);
-    const sortedNonMaxTotals = totalValues
+    const totalChartData = summarizeTotalBars(chart_data, compressTotalBars);
+    const totalBarValues = totalChartData.map((dayData) => Number(dayData.total) || 0);
+    const maxTotal = Math.max(...totalBarValues);
+    const sortedNonMaxTotals = totalBarValues
         .filter((total) => total < maxTotal)
         .sort((a, b) => a - b);
 
@@ -308,12 +338,12 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     })}
                                 </LineChart>
                             ) : (
-                                <BarChart data={chart_data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <BarChart data={totalChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                                     <XAxis
                                         dataKey="date"
                                         tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 800 }}
-                                        tickFormatter={(str) => str.slice(5)}
+                                        tickFormatter={formatTotalDateTick}
                                         axisLine={false}
                                         tickLine={false}
                                         dy={10}
@@ -325,7 +355,7 @@ export default function TrendChart({ apiData, highlightUserId, focusedUserId, on
                                     />
                                     <Tooltip content={<TotalTooltip />} cursor={{ fill: 'hsl(var(--muted))' }} isAnimationActive={false} />
                                     <Bar dataKey="total" radius={[6, 6, 0, 0]}>
-                                        {chart_data.map((entry, index) => (
+                                        {totalChartData.map((entry, index) => (
                                             <Cell
                                                 key={`total-bar-${entry.date || index}`}
                                                 fill={getTotalBarColor(Number(entry.total) || 0, maxTotal, sortedNonMaxTotals)}

@@ -4,7 +4,8 @@ import AnalysisPanel from './charts/AnalysisPanel';
 import StatsCard from './StatsCard';
 import TrendChart from './charts/TrendChart';
 import ActivityHeatmap from './charts/ActivityHeatmap';
-import ChannelPieChart from './charts/ChannelPieChart';
+import ChannelInsightSwitcher from './charts/ChannelInsightSwitcher';
+import ChannelStatsCard from './charts/ChannelStatsCard';
 import RankingList from './RankingList';
 import MouseEffectCard from './MouseEffectCard';
 import { fetchAPI } from '@/lib/api';
@@ -30,14 +31,15 @@ export default function AllTimeDashboard({ channelId, userId }) {
                 const baseParamsStr = baseParams.toString();
                 const histParamsStr = histParams.toString();
 
-                const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes, userRankRes] = await Promise.all([
+                const [rankRes, trendRes, heatmapRes, overallRes, personalRes, pieRes, userRankRes, globalOverallRes] = await Promise.all([
                     fetchAPI(`/ranking/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
                     fetchAPI(`/stats/history/total${histParamsStr ? `?${histParamsStr}` : ''}`),
                     fetchAPI(`/stats/heatmap/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
                     fetchAPI(`/stats/analysis/total${baseParamsStr ? `?${baseParamsStr}` : ''}`),
                     userId && userId !== 'guest' ? fetchAPI(`/stats/analysis/total?${baseParamsStr}${baseParamsStr ? '&' : ''}user_id=${userId}`) : Promise.resolve(null),
                     !channelId ? fetchAPI(`/stats/channels_distribution/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null),
-                    userId && userId !== 'guest' ? fetchAPI(`/users/${userId}/rank/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null)
+                    userId && userId !== 'guest' ? fetchAPI(`/users/${userId}/rank/total${baseParamsStr ? `?${baseParamsStr}` : ''}`) : Promise.resolve(null),
+                    channelId ? fetchAPI('/stats/analysis/total') : Promise.resolve(null)
                 ]);
 
                 const ranking = await rankRes.json();
@@ -57,6 +59,7 @@ export default function AllTimeDashboard({ channelId, userId }) {
                 const overall = await overallRes.json();
                 const personal = (personalRes && personalRes.ok) ? await personalRes.json() : null;
                 const pie = (pieRes && pieRes.ok) ? await pieRes.json() : [];
+                const globalOverall = (globalOverallRes && globalOverallRes.ok) ? await globalOverallRes.json() : overall;
 
                 const userRank = (userRankRes && userRankRes.ok) ? await userRankRes.json() : null;
                 let myData = userRank;
@@ -65,7 +68,7 @@ export default function AllTimeDashboard({ channelId, userId }) {
                     if (idx !== -1) myData = { ...ranking[idx], rank: idx + 1 };
                 }
 
-                setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
+                setData({ ranking, trend, heatmap, pie, overall, globalOverall, personal, myData, topUserCount: ranking[0]?.count || 0 });
             } catch (err) {
                 console.error("AllTimeDashboard Load Error:", err);
                 const code = err.status || (err.name === 'TypeError' ? 'NetworkError' : 'unknown');
@@ -109,6 +112,7 @@ export default function AllTimeDashboard({ channelId, userId }) {
                                 highlightUserId={userId}
                                 focusedUserId={focusedUserId}
                                 onSearchUser={(id) => setFocusedUserId(id)}
+                                compressTotalBars
                             />
                         </div>
 
@@ -117,15 +121,22 @@ export default function AllTimeDashboard({ channelId, userId }) {
                                 <ActivityHeatmap data={data.heatmap} />
                             </div>
                             <div className="xl:col-span-1 w-full min-w-0">
-                                {!channelId ? (
-                                    <ChannelPieChart data={data.pie} />
-                                ) : (
-                                    <Card className="h-full min-h-[300px] flex items-center justify-center p-6">
-                                        <div className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-center">
-                                            AI要約は準備中です
-                                        </div>
-                                    </Card>
-                                )}
+                                <div className="h-full">
+                                    {!channelId ? (
+                                        <ChannelInsightSwitcher
+                                            pieData={data.pie}
+                                            ranking={data.ranking}
+                                            overall={data.overall}
+                                            prevOverall={data.globalOverall}
+                                        />
+                                    ) : (
+                                        <ChannelStatsCard
+                                            ranking={data.ranking}
+                                            overall={data.overall}
+                                            prevOverall={data.globalOverall}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </Card>
                     </div>
