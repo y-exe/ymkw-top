@@ -12,7 +12,7 @@ async def reset_db():
         conn = await asyncpg.connect(DB_DSN)
         
         print("初期化")
-        await conn.execute("TRUNCATE TABLE snapshots RESTART IDENTITY;")
+        await conn.execute("DROP TABLE IF EXISTS snapshots;")
         
         print("完了")
         

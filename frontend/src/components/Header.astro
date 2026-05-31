@@ -34,7 +34,7 @@ const userName = userNameRaw ? decodeURIComponent(userNameRaw) : null;
 const userAvatar = Astro.cookies.get("user_avatar")?.value;
 
 const parts = url.pathname.split("/").filter(Boolean);
-const mode = parts[0] === "open" ? "履歴" : "月間";
+const mode = parts[0] === "open" ? "累計" : "月間";
 const year = parts[1];
 const month = parts[2];
 ---

@@ -6,8 +6,6 @@ from datetime import datetime, timedelta, time
 from dateutil.relativedelta import relativedelta
 from zoneinfo import ZoneInfo
 import config
-import aiohttp
-import os
 
 # 定数
 EMOJI_FIRST = "<:first:1452959005625417790>"
@@ -15,9 +13,6 @@ EMOJI_SECOND = "<:second:1452958981969543168>"
 EMOJI_THIRD = "<:third:1452958880379306024>"
 EXCLUDE_CHANNEL_ID = 1406033558757314752
 KING_ROLE_ID = 1452968848998531245
-
-API_SECRET = os.getenv("API_SECRET", "default_insecure_secret_change_me")
-API_HEADERS = {"X-API-KEY": API_SECRET}
 
 DELETED_USER_FILTER = "(u.user_id IS NOT NULL AND u.username NOT ILIKE 'deleted%user' AND u.display_name NOT ILIKE 'deleted%user')"
 
@@ -62,37 +57,6 @@ class MonthSelectView(discord.ui.View):
     def __init__(self, bot):
         super().__init__()
         self.add_item(MonthSelect(bot))
-
-class SnapshotDeleteSelect(discord.ui.Select):
-    def __init__(self, snapshots):
-        options = []
-        for s in snapshots[:25]:
-            date_str = s['created_at'].split("T")[0]
-            label = f"#{s['snapshot_id']} ({date_str})"
-            desc = (s['title'][:95] + '...') if len(s['title']) > 95 else s['title']
-            options.append(discord.SelectOption(label=label, description=desc, value=str(s['snapshot_id'])))
-
-        if not options:
-            options.append(discord.SelectOption(label="削除できるデータがありません", value="none"))
-
-        super().__init__(placeholder="削除するスナップショットを選択...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        snapshot_id = self.values[0]
-        if snapshot_id == "none":
-            return await interaction.response.send_message("選択が無効です", ephemeral=True)
-
-        async with aiohttp.ClientSession() as session:
-            async with session.delete(f'https://api.ymkw.top/snapshots/{snapshot_id}', headers=API_HEADERS) as resp:
-                if resp.status == 200:
-                    await interaction.response.send_message(f"🗑️ スナップショット #{snapshot_id} を削除しました。", ephemeral=True)
-                else:
-                    await interaction.response.send_message(f"❌ 削除に失敗しました (Status: {resp.status})", ephemeral=True)
-
-class SnapshotDeleteView(discord.ui.View):
-    def __init__(self, snapshots):
-        super().__init__()
-        self.add_item(SnapshotDeleteSelect(snapshots))
 
 class Ranking(commands.Cog):
     def __init__(self, bot):
@@ -176,9 +140,9 @@ class Ranking(commands.Cog):
         view = MonthSelectView(self.bot)
         await interaction.response.send_message("集計したい月を選択してください:", view=view, ephemeral=True)
 
-    # コマンド: /open
-    @app_commands.command(name="open", description="【管理者用】全期間のランキングを表示しスナップショットを作成")
-    async def open_total(self, interaction: discord.Interaction):
+    # コマンド: /all
+    @app_commands.command(name="all", description="【管理者用】全期間のランキングを表示")
+    async def all_total(self, interaction: discord.Interaction):
         if interaction.user.id != config.OWNER_ID:
             return await interaction.response.send_message("権限がありません", ephemeral=True)
 
@@ -206,72 +170,24 @@ class Ranking(commands.Cog):
                 await interaction.followup.send("データがありません")
                 return
 
-            snapshot_url = "https://ymkw.top/"
-            try:
-                snapshot_data = {
-                    "title": f"Total Ranking - {datetime.now(ZoneInfo('Asia/Tokyo')).strftime('%Y/%m/%d')}",
-                    "rows": [dict(r) for r in rows],
-                }
-                
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
-                        'https://api.ymkw.top/snapshots', 
-                        json={"title": snapshot_data["title"], "data": snapshot_data},
-                        headers=API_HEADERS
-                    ) as resp:
-                        if resp.status == 200:
-                            res = await resp.json()
-                            snapshot_url = f"https://ymkw.top/open/{res['id']}"
-                            await interaction.followup.send(f"✅ スナップショットを作成しました！\nURL: {snapshot_url}")
-                        else:
-                            error_text = await resp.text()
-                            await interaction.followup.send(f"❌ API Error: {resp.status}")
-                            return
-            except Exception as e:
-                await interaction.followup.send(f"❌ Failed: {e}")
-                return
-
             now_jst = datetime.now(ZoneInfo("Asia/Tokyo"))
             view = self.create_ranking_view(
-                "🏆 全期間の発言ランキング (スナップショット)", 
+                "🏆 全期間の発言ランキング",
                 rows[:10], 
                 now_jst.year, 
                 now_jst.month, 
                 show_role_reward=False,
-                custom_url=snapshot_url
+                custom_url="https://ymkw.top/open"
             )
             
             await interaction.channel.send(
                 view=view,
                 allowed_mentions=discord.AllowedMentions.none()
             )
+            await interaction.followup.send("✅ 全期間ランキングを送信しました。", ephemeral=True)
 
         finally:
             await pool.close()
-
-    # コマンド: /close
-    @app_commands.command(name="close", description="【管理者用】作成したスナップショットを選択して削除")
-    async def close_snapshot(self, interaction: discord.Interaction):
-        if interaction.user.id != config.OWNER_ID:
-            return await interaction.response.send_message("権限がありません", ephemeral=True)
-
-        await interaction.response.defer(ephemeral=True)
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get('https://api.ymkw.top/snapshots') as resp:
-                    if resp.status != 200:
-                        return await interaction.followup.send("APIエラー: スナップショット一覧を取得できませんでした。")
-                    snapshots = await resp.json()
-
-            if not snapshots:
-                return await interaction.followup.send("削除可能なスナップショットがありません。")
-
-            view = SnapshotDeleteView(snapshots)
-            await interaction.followup.send("削除するスナップショットを選択してください:", view=view)
-
-        except Exception as e:
-            await interaction.followup.send(f"エラーが発生しました: {e}")
 
     # 共通ロジック
     async def run_ranking_logic(self, guild, year, month, channel=None, is_auto=False):

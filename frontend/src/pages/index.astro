@@ -1,23 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { Calendar, History, ArrowRight } from "lucide-react";
-import { fetchAPI } from "@/lib/api";
 
 export const prerender = false;
-
-let latestSnapshotId = null;
-
-try {
-  const res = await fetchAPI("/snapshots");
-  if (res.ok) {
-    const list = await res.json();
-    if (Array.isArray(list) && list.length > 0) {
-      latestSnapshotId = list[0].snapshot_id;
-    }
-  }
-} catch (e) {
-  console.error("Home Snapshot Fetch Error:", e);
-}
 
 const date = new Date();
 date.setDate(0);
@@ -381,31 +366,16 @@ const description =
           </div>
         </div>
       </div>
-      {
-        latestSnapshotId ? (
-          <a href={`/open/${latestSnapshotId}`} class="nav-card order-3">
-            <div class="card-icon">
-              <History className="w-6 h-6" />
-            </div>
-            <h2 class="card-title">歴代ランキング</h2>
-            <p class="card-sub">スナップショット #{latestSnapshotId}</p>
-            <span class="card-link">
-              履歴を見る <ArrowRight className="w-3 h-3" />
-            </span>
-          </a>
-        ) : (
-          <a href="/no-snapshots" class="nav-card order-3 opacity-70">
-            <div class="card-icon">
-              <History className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <h2 class="card-title text-muted-foreground">履歴なし</h2>
-            <p class="card-sub">生成待ちです</p>
-            <span class="card-link text-muted-foreground border-transparent">
-              利用できません
-            </span>
-          </a>
-        )
-      }
+      <a href="/open" class="nav-card order-3">
+        <div class="card-icon">
+          <History className="w-6 h-6" />
+        </div>
+        <h2 class="card-title">累計ランキング</h2>
+        <p class="card-sub">All Time</p>
+        <span class="card-link">
+          ランキングを見る <ArrowRight className="w-3 h-3" />
+        </span>
+      </a>
     </div>
     <div class="footer"><p>© 2026 ymkw.top</p></div>
   </div>

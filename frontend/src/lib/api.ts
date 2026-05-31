@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.DEV ? "" : "https://api.ymkw.top";
+const SSR_API_URL = import.meta.env.PUBLIC_API_URL || "https://api.ymkw.top";
 
 interface FetchAPIOptions extends Omit<RequestInit, 'signal'> {
     timeout?: number;
@@ -33,10 +34,10 @@ export async function fetchAPI(
 ): Promise<Response> {
     const { retries = 2, ...fetchOptions } = options;
 
-    const url = path.startsWith("http") ? path : `${API_URL}${path}`;
-
     // SSR（サーバーサイド）ではOrigin/Refererが自動付与されないため手動で追加
     const isServer = typeof window === "undefined";
+    const baseUrl = isServer ? SSR_API_URL : API_URL;
+    const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
     const headers: Record<string, string> = {
         ...(isServer ? { Referer: "https://www.ymkw.top/" } : {}),
         ...((fetchOptions.headers as Record<string, string>) || {}),

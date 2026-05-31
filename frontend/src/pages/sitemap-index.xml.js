@@ -1,18 +1,7 @@
-import { fetchAPI } from "@/lib/api";
 import { escapeXml } from "@/lib/seo";
 
 export const GET = async () => {
   const SITE_URL = "https://www.ymkw.top";
-
-  let snapshots = [];
-  try {
-    const res = await fetchAPI("/snapshots");
-    if (res.ok) {
-      snapshots = await res.json();
-    }
-  } catch (e) {
-    console.error("Sitemap Snapshot Fetch Error:", e);
-  }
 
   const months = [];
   const now = new Date();
@@ -40,12 +29,12 @@ export const GET = async () => {
       changefreq: "monthly",
       lastmod: new Date(Date.UTC(d.y, d.m, 0, 15, 0, 0)).toISOString()
     })),
-    ...snapshots.map(s => ({
-      loc: `${SITE_URL}/open/${s.snapshot_id}`,
-      priority: 0.6,
-      changefreq: "weekly",
-      lastmod: s.created_at || new Date().toISOString()
-    }))
+    {
+      loc: `${SITE_URL}/open`,
+      priority: 0.8,
+      changefreq: "daily",
+      lastmod: new Date().toISOString()
+    }
   ];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import MonthSelector from './MonthSelector';
-import SnapshotSelector from './SnapshotSelector';
 import { Hash, LayoutGrid } from 'lucide-react';
 import { fetchAPI } from '@/lib/api';
 
 export default function SidebarContent({ currentPath, queryParams, pageMode, currentId, currentMonth }) {
-    const [data, setData] = useState({ channels: [], snapshots: [] });
+    const [data, setData] = useState({ channels: [] });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchSidebarData = async () => {
             try {
-                const [cRes, sRes] = await Promise.all([
-                    fetchAPI("/channels"),
-                    fetchAPI("/snapshots")
-                ]);
-                setData({ channels: await cRes.json(), snapshots: await sRes.json() });
+                const cRes = await fetchAPI("/channels");
+                setData({ channels: await cRes.json() });
             } catch (e) { console.error(e); }
             finally { setLoading(false); }
         };
@@ -44,12 +40,9 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
     const prevMonth = now.getMonth() + 1;
     const monthlyBaseUrl = `/month/${prevYear}/${prevMonth}`;
 
-    let allTimeUrl = '/no-snapshots';
-    if (Array.isArray(data.snapshots) && data.snapshots.length > 0) {
-        allTimeUrl = `/open/${data.snapshots[0].snapshot_id}`;
-    }
+    const allTimeUrl = '/open';
 
-    const isDashboard = currentPath.includes('/month/') || currentPath.includes('/open/');
+    const isDashboard = currentPath.includes('/month/') || currentPath === '/open' || currentPath.includes('/open/');
     const dashboardBasePath = isDashboard ? currentPath.split('?')[0] : monthlyBaseUrl;
 
     return (
@@ -60,7 +53,6 @@ export default function SidebarContent({ currentPath, queryParams, pageMode, cur
             </div>
 
             {pageMode === 'month' && <MonthSelector currentYear={currentId} currentMonth={currentMonth} />}
-            {pageMode === 'open' && <SnapshotSelector snapshots={data.snapshots} currentId={currentId} />}
 
             <nav className="space-y-8">
                 <a href={dashboardBasePath} className={`flex items-center gap-3 px-4 py-3 text-sm rounded-2xl font-black transition-all border shadow-sm ${isDashboard && !channelId ? 'bg-primary text-primary-foreground border-primary shadow-primary/20' : 'bg-transparent text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'}`}>

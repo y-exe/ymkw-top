@@ -13,7 +13,7 @@ export default function FooterSection({
             links: [
                 { text: "Overview", url: "/" },
                 { text: "Monthly Analytics", url: "/month/2025/3" },
-                { text: "All Time Ranking", url: "/no-snapshots" },
+                { text: "All Time Ranking", url: "/open" },
             ],
         },
         {

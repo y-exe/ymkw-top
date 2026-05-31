@@ -6,13 +6,12 @@ import aiohttp
 import os
 import sys
 import asyncio
-import json
 import time
 import diskcache
 import tempfile
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Any, Tuple
 from pathlib import Path
 from datetime import datetime
 import socket
@@ -186,7 +185,7 @@ def cors_json_response(request: Request, status_code: int, content: dict, block_
 
 PUBLIC_PATHS = {"/", "/health", "/docs", "/openapi.json", "/favicon.ico"}
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-DB_HEAVY_PREFIXES = ("/ranking", "/stats", "/users", "/snapshots")
+DB_HEAVY_PREFIXES = ("/ranking", "/stats", "/users")
 
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "10"))
 MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "60"))
@@ -341,15 +340,6 @@ class RankingItem(BaseModel):
     count: int
     char_count: int
 
-class SnapshotCreate(BaseModel):
-    title: str
-    data: Dict[str, Any]
-
-class SnapshotItem(BaseModel):
-    snapshot_id: int
-    created_at: datetime
-    title: str
-
 def format_ranking_response(rows):
     return [{"user_id": str(r["user_id"]), "display_name": r["display_name"] or "Unknown", "username": r["username"] or "unknown", "avatar": r["avatar_url"], "count": r["c"], "char_count": r["chars"] or 0} for r in rows]
 
@@ -451,43 +441,6 @@ async def get_channels(response: Response):
     
     set_cache(ckey, res, ttl=3600)
     return res
-
-@app.get("/snapshots")
-async def get_snapshots_list(response: Response):
-    ckey = "snapshots_list"
-    cached = get_cache(ckey)
-    response.headers["Cache-Control"] = "public, max-age=600"
-    if cached: return cached
-    rows = await pool.fetch("SELECT snapshot_id, created_at, title FROM snapshots ORDER BY snapshot_id DESC")
-    res = [{"snapshot_id": r['snapshot_id'], "created_at": r['created_at'], "title": r['title']} for r in rows]
-    set_cache(ckey, res, ttl=600)
-    return res
-
-@app.post("/snapshots")
-async def create_snapshot(snapshot: SnapshotCreate):
-    try:
-        data_str = json.dumps(snapshot.data)
-        row = await pool.fetchrow("INSERT INTO snapshots (title, data) VALUES ($1, $2) RETURNING snapshot_id", snapshot.title, data_str)
-        cache.delete("snapshots_list")
-        return {"id": row['snapshot_id']}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/snapshots/{snapshot_id}")
-async def get_snapshot(snapshot_id: int, response: Response):
-    response.headers["Cache-Control"] = "public, max-age=3600"
-    row = await pool.fetchrow("SELECT snapshot_id, created_at, title, data FROM snapshots WHERE snapshot_id = $1", snapshot_id)
-    if not row: raise HTTPException(status_code=404, detail="Snapshot not found")
-    s_data = row['data']
-    if isinstance(s_data, str): s_data = json.loads(s_data)
-    return {"snapshot_id": row['snapshot_id'], "title": row['title'], "created_at": row['created_at'], "data": s_data}
-
-@app.delete("/snapshots/{snapshot_id}")
-async def delete_snapshot(snapshot_id: int):
-    result = await pool.execute("DELETE FROM snapshots WHERE snapshot_id = $1", snapshot_id)
-    if result == "DELETE 0": raise HTTPException(status_code=404, detail="Not found")
-    cache.delete("snapshots_list")
-    return {"status": "deleted"}
 
 @app.get("/users/search")
 async def search_users(q: str):
@@ -874,7 +827,7 @@ async def debug_db():
     if not pool:
         return {"status": "error", "message": "Connection pool not initialized"}
     try:
-        tables = ["channels", "users", "messages", "snapshots"]
+        tables = ["channels", "users", "messages"]
         counts = {}
         for t in tables:
             try:

@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, LogIn, AlertCircle, LayoutGrid, Hash } from 'lucide-react';
 import MonthSelector from './MonthSelector';
-import SnapshotSelector from './SnapshotSelector';
 import { fetchAPI } from '@/lib/api';
 
 export default function MobileNavigation({ user = {}, currentPath = '', queryParams = '' }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-    const [data, setData] = useState({ channels: [], snapshots: [] });
+    const [data, setData] = useState({ channels: [] });
 
     useEffect(() => {
         const fetchNavData = async () => {
             try {
-                const [cRes, sRes] = await Promise.all([
-                    fetchAPI("/channels"),
-                    fetchAPI("/snapshots")
-                ]);
+                const cRes = await fetchAPI("/channels");
                 setData({
-                    channels: await cRes.json(),
-                    snapshots: await sRes.json()
+                    channels: await cRes.json()
                 });
             } catch (e) { console.error(e); }
         };
@@ -67,12 +62,9 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
     const prevMonth = now.getMonth() + 1;
     const monthlyBaseUrl = `/month/${prevYear}/${prevMonth}`;
 
-    let allTimeUrl = '/no-snapshots';
-    if (Array.isArray(data.snapshots) && data.snapshots.length > 0) {
-        allTimeUrl = `/open/${data.snapshots[0].snapshot_id}`;
-    }
+    const allTimeUrl = '/open';
 
-    const isDashboard = currentPath.includes('/month/') || currentPath.includes('/open/');
+    const isDashboard = currentPath.includes('/month/') || currentPath === '/open' || currentPath.includes('/open/');
     const dashboardBasePath = isDashboard ? currentPath.split('?')[0] : monthlyBaseUrl;
 
     return (
@@ -133,7 +125,6 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
 
                             <div className="space-y-6">
                                 {pageMode === 'month' && <MonthSelector currentYear={currentId} currentMonth={currentMonth} dark />}
-                                {pageMode === 'open' && <SnapshotSelector snapshots={data.snapshots} currentId={currentId} dark />}
 
                                 <nav className="space-y-6 pt-4 text-left">
                                     <a href={dashboardBasePath} onClick={() => setIsOpen(false)} className={`flex items-center gap-4 p-4 rounded-2xl font-bold text-sm border transition-all ${isDashboard && !currentChannelId ? 'bg-white text-gray-950 border-white shadow-xl shadow-black/20' : 'bg-white/6 text-white/65 border-white/8'}`}>

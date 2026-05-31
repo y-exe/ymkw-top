@@ -10,9 +10,8 @@ import MouseEffectCard from './MouseEffectCard';
 import { fetchAPI } from '@/lib/api';
 import { Card } from "@/components/ui/card";
 
-export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
+export default function AllTimeDashboard({ channelId, userId }) {
     const [data, setData] = useState(null);
-    const [snapshotInfo, setSnapshotInfo] = useState(null);
     const [focusedUserId, setFocusedUserId] = useState(null);
 
     useEffect(() => {
@@ -20,13 +19,7 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
 
         const fetchAllData = async () => {
             try {
-                const infoRes = await fetchAPI(`/snapshots/${snapshotId}`);
-                if (!infoRes.ok) throw new Error("Snapshot not found");
-                const info = await infoRes.json();
-                setSnapshotInfo(info);
-
-                const endDate = info.created_at;
-                const baseParams = new URLSearchParams({ end_date: endDate });
+                const baseParams = new URLSearchParams();
                 if (channelId) baseParams.append('channel_id', channelId);
 
                 const histParams = new URLSearchParams(baseParams);
@@ -74,7 +67,7 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
 
                 setData({ ranking, trend, heatmap, pie, overall, personal, myData, topUserCount: ranking[0]?.count || 0 });
             } catch (err) {
-                console.error("SnapshotDashboard Load Error:", err);
+                console.error("AllTimeDashboard Load Error:", err);
                 const code = err.status || (err.name === 'TypeError' ? 'NetworkError' : 'unknown');
                 const urlParam = err.url ? `&url=${encodeURIComponent(err.url)}` : '';
                 const msgParam = err.message ? `&msg=${encodeURIComponent(err.message)}` : '';
@@ -86,16 +79,16 @@ export default function SnapshotDashboard({ snapshotId, channelId, userId }) {
             }
         };
         fetchAllData();
-    }, [snapshotId, channelId, userId, focusedUserId]);
+    }, [channelId, userId, focusedUserId]);
 
-    if (!snapshotInfo || !data) return <div className="min-h-[80vh]"></div>;
+    if (!data) return <div className="min-h-[80vh]"></div>;
 
     return (
         <MouseEffectCard className="min-h-screen pb-32">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out space-y-8">
                 <PageHeader
-                    title={snapshotInfo.title}
-                    subTitle="履歴スナップショット"
+                    title="All Time"
+                    subTitle="累計レポート"
                 />
 
                 <div className="flex flex-col lg:flex-row gap-8">

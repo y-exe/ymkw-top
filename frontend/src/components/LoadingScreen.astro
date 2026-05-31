@@ -73,11 +73,11 @@
             }, remaining);
         };
 
-        if (window.location.pathname.includes('/month/') || window.location.pathname.includes('/open/')) {
+        if (window.location.pathname.includes('/month/') || window.location.pathname === '/open' || window.location.pathname.includes('/open/')) {
             show();
         }
 
-        const shouldShowForPath = (path) => path.includes('/month/') || path.includes('/open/');
+        const shouldShowForPath = (path) => path.includes('/month/') || path === '/open' || path.includes('/open/');
 
         document.addEventListener('astro:before-preparation', (event) => {
             const to = event.to?.url || event.to;
@@ -85,7 +85,7 @@
             if (shouldShowForPath(path)) show();
         });
         document.addEventListener('astro:after-swap', () => {
-            if (!window.location.pathname.includes('/month/') && !window.location.pathname.includes('/open/')) {
+            if (!window.location.pathname.includes('/month/') && window.location.pathname !== '/open' && !window.location.pathname.includes('/open/')) {
                 hide();
             }
         });

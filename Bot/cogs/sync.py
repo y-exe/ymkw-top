@@ -34,15 +34,6 @@ class SyncData(commands.Cog):
             );
         ''')
 
-        await pool.execute('''
-            CREATE TABLE IF NOT EXISTS snapshots (
-                snapshot_id SERIAL PRIMARY KEY,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                title TEXT,
-                data JSONB
-            );
-        ''')
-        
         await pool.close()
         self.sync_loop.start()
         self.fetch_missing_users_loop.start()

@@ -14,7 +14,7 @@ export default defineConfig({
     server: {
       allowedHosts: ['ymkw.top'],
       proxy: Object.fromEntries(
-        ['/channels', '/snapshots', '/users', '/ranking', '/stats', '/debug'].map((path) => [
+        ['/channels', '/users', '/ranking', '/stats', '/debug'].map((path) => [
           path,
           {
             target: 'https://api.ymkw.top',
