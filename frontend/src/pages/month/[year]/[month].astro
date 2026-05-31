@@ -51,19 +51,12 @@ const pageTitle = `${year}年${month}月 月間レポート`;
 const pageDescription = `${year}年${month}月のやまかわてるき鯖の統計情報。メッセージ数ランキング、アクティビティヒートマップ、チャットの盛り上がりを分析したレポート。`;
 
 let seoRanking: any[] = [];
-let seoOverall: any = null;
 if (isValidMonth && !isRestricted) {
     try {
-        const [rankingRes, analysisRes] = await Promise.all([
-            fetchAPI(`/ranking/monthly/${targetYear}/${targetMonth}`, { retries: 1 }),
-            fetchAPI(`/stats/analysis/${targetYear}/${targetMonth}`, { retries: 1 }),
-        ]);
+        const rankingRes = await fetchAPI(`/ranking/monthly/${targetYear}/${targetMonth}`, { retries: 1 });
         if (rankingRes.ok) {
             const ranking = await rankingRes.json();
             if (Array.isArray(ranking)) seoRanking = ranking.slice(0, 10);
-        }
-        if (analysisRes.ok) {
-            seoOverall = await analysisRes.json();
         }
     } catch (e) {
         console.error("Monthly SEO Fetch Error:", e);
@@ -75,33 +68,21 @@ const breadcrumbs = [
     { name: "月間レポート", item: "https://www.ymkw.top/" },
     { name: `${year}年${month}月`, item: `https://www.ymkw.top/month/${year}/${month}` }
 ];
+
+const rankingSchema = seoRanking.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${year}年${month}月 月間ランキング上位`,
+    itemListElement: seoRanking.slice(0, 10).map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.display_name || item.username,
+        description: `${formatNumber(item.count)}回`,
+    })),
+} : null;
 ---
 
-<Layout title={pageTitle} description={pageDescription} breadcrumbs={breadcrumbs} noindex={isRestricted || !isValidMonth}>
-    {!isRestricted && isValidMonth && (
-        <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5 text-gray-900 shadow-sm">
-            <h1 class="text-2xl font-black">{pageTitle}</h1>
-            <p class="mt-3 max-w-3xl text-sm leading-7 text-gray-600">
-                {pageDescription}
-                {seoOverall?.total ? ` この月の集計対象メッセージは${formatNumber(seoOverall.total)}件です。` : ""}
-                {seoOverall?.unique_users ? ` 参加ユーザー数は${formatNumber(seoOverall.unique_users)}人です。` : ""}
-            </p>
-            {seoRanking.length > 0 && (
-                <div class="mt-5">
-                    <h2 class="text-sm font-bold text-gray-700">月間ランキング上位</h2>
-                    <ol class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                        {seoRanking.slice(0, 5).map((item, index) => (
-                            <li class="rounded-md bg-gray-50 px-3 py-2 text-sm">
-                                <span class="font-bold">{index + 1}位</span>
-                                <span class="ml-2">{item.display_name || item.username}</span>
-                                <span class="ml-1 text-gray-500">{formatNumber(item.count)}回</span>
-                            </li>
-                        ))}
-                    </ol>
-                </div>
-            )}
-        </section>
-    )}
+<Layout title={pageTitle} description={pageDescription} breadcrumbs={breadcrumbs} noindex={isRestricted || !isValidMonth} jsonLd={rankingSchema}>
     {isRestricted && !isAuthorized ? (
         <>
             <div class="h-[60vh] flex flex-col items-center justify-center animate-fade-in p-4">

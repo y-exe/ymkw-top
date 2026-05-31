@@ -259,7 +259,7 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     if not (is_bot or is_website or is_public_path):
         if path not in PUBLIC_PATHS:
             logger.warning(f"Access Denied: Origin={origin}, Referer={referer}, Path={request.url.path}")
-            return cors_json_response(request, status_code=403, content={"detail": "Access Denied: Origin/Referer not allowed."}, block_reason="security-policy")
+            return cors_json_response(request, status_code=403, content={"detail": "Access Denied"}, block_reason="security-policy")
 
     client_ip = get_client_ip(request)
     
