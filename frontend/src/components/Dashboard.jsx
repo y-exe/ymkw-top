@@ -51,7 +51,7 @@ export default function Dashboard({ year, month, channelId, userId }) {
                 const ranking = await rankRes.json();
                 const trend = await trendRes.json();
 
-                if (!ranking || ranking.length === 0 || !trend || trend.length === 0) {
+                if (!ranking || ranking.length === 0 || !trend?.chart_data || trend.chart_data.length === 0) {
                     if (channelId) {
                         window.location.href = `/no-channel?from=${encodeURIComponent(window.location.pathname + window.location.search)}`;
                         return;

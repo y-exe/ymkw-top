@@ -12,7 +12,7 @@ import "../styles/global.css";
 
 const {
   title,
-  description = "YoutuberのDiscrd鯖であるやまかわてるき鯖の活動量、ランキング、統計情報を可視化する公認WEBダッシュボード。個人の発言数推移やサーバー全体のトレンドを確認できます。",
+  description = "YoutuberのDiscord鯖であるやまかわてるき鯖の活動量、ランキング、統計情報を可視化する公認WEBダッシュボード。個人の発言数推移やサーバー全体のトレンドを確認できます。",
   image,
   hideNavigation = false,
   noindex = false,
@@ -36,6 +36,8 @@ const canonicalURL = new URL(
   Astro.url.pathname,
   Astro.site || "https://ymkw.top",
 );
+const imageURL = new URL(image || "/ranking.webp", canonicalURL).href;
+const fullTitle = `${title} | やまかわてるき鯖WEBダッシュボード`;
 
 const websiteSchema = {
   "@context": "https://schema.org",
@@ -43,6 +45,20 @@ const websiteSchema = {
   name: "やまかわてるき鯖WEBダッシュボード",
   url: "https://www.ymkw.top",
   description: description,
+};
+
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: fullTitle,
+  url: canonicalURL.href,
+  description: description,
+  inLanguage: "ja",
+  isPartOf: {
+    "@type": "WebSite",
+    name: "やまかわてるき鯖WEBダッシュボード",
+    url: "https://www.ymkw.top",
+  },
 };
 
 let breadcrumbSchema = null;
@@ -72,22 +88,24 @@ if (breadcrumbs.length > 0) {
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <title>{title} | やまかわてるき鯖WEBダッシュボード</title>
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
-    <meta property="og:title" content={`${title} | ymkw.top`} />
+    <meta property="og:site_name" content="ymkw.top" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    {image && <meta property="og:image" content={image} />}
+    <meta property="og:image" content={imageURL} />
 
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={`${title} | ymkw.top`} />
+    <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
-    {image && <meta property="twitter:image" content={image} />}
+    <meta property="twitter:image" content={imageURL} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -103,6 +121,10 @@ if (breadcrumbs.length > 0) {
     <script
       type="application/ld+json"
       set:html={JSON.stringify(websiteSchema)}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(webPageSchema)}
     />
     {
       breadcrumbSchema && (
