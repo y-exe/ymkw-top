@@ -85,7 +85,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
 
                     <a href="/" className="flex items-center gap-2">
                         <img src="/ymkw.webp" className="w-7 h-7 rounded-lg border border-white/10 shadow-sm" alt="Logo" />
-                        <span className="text-xs font-black uppercase text-white" style={{ fontFamily: '"Google Sans", sans-serif' }}>ymkw.top</span>
+                        <span className="text-xs font-black text-white" style={{ fontFamily: '"Google Sans", sans-serif' }}>ymkw.top</span>
                     </a>
 
                     <div className="w-9 flex justify-end">
