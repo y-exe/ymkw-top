@@ -106,7 +106,7 @@ export default function MobileNavigation({ user = {}, currentPath = '', queryPar
                         <h3 className="text-lg font-black text-gray-900 mb-2 font-outfit">ログアウトしますか？</h3>
                         <p className="text-xs text-gray-500 mb-8 leading-relaxed">アカウントからログアウトします。</p>
                         <div className="flex flex-col gap-3">
-                            <button onClick={handleResetAuth} className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-200 active:scale-95 transition-all">ログアウト</button>
+                            <button onClick={handleResetAuth} className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl active:scale-95 transition-all">ログアウト</button>
                             <button onClick={() => setIsLogoutModalOpen(false)} className="w-full py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl active:bg-gray-100 transition-colors">キャンセル</button>
                         </div>
                     </div>

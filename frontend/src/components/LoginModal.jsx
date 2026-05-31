@@ -75,11 +75,30 @@ export default function LoginModal() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-card text-card-foreground rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border border-border">
                 <div className="p-6 border-b border-border">
+                    <div className="mb-6 flex flex-col items-center text-center">
+                        <div className="mb-3 flex items-center gap-3">
+                            <img src="/ranking.webp" alt="" className="h-12 w-12 rounded-xl object-cover shadow-sm" />
+                            <p
+                                className="text-xl font-black italic text-foreground"
+                                style={{ fontFamily: '"Noto Sans JP", "Noto Sans Japanese", sans-serif', fontWeight: 900 }}
+                            >
+                                発言ランキングWeb
+                            </p>
+                        </div>
+                        <p
+                            className="text-sm font-bold text-gray-500"
+                            style={{ fontFamily: '"Noto Sans JP", "Noto Sans Japanese", sans-serif' }}
+                        >
+                            個人分析、過去のデータ、詳しいランキング等
+                        </p>
+                    </div>
                     <h2 className="text-xl font-bold text-foreground">ようこそ！</h2>
-                    <p className="text-sm text-muted-foreground mt-1">あなたのアカウントを選択してください</p>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                        やまかわてるき鯖に入っているDiscordの表示名またはユーザー名で<br />
+                        検索してください!!
+                    </p>
 
                     <div className="mt-3 flex items-center gap-2 text-xs font-bold text-blue-500 bg-blue-500/10 px-3 py-2 rounded-lg">
-                        <span className="text-base">📊</span>
                         <span>ログインすることで個人分析などを見ることができます</span>
                     </div>
                 </div>
