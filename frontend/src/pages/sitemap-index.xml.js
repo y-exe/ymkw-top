@@ -11,7 +11,23 @@ export const GET = async () => {
   }
 
   const staticPages = [
-    { url: "", priority: 1.0, changefreq: "daily" },
+    {
+      url: "",
+      priority: 1.0,
+      changefreq: "daily",
+      images: [
+        {
+          loc: `${SITE_URL}/ymkw.webp`,
+          title: "やまかわてるき",
+          caption: "やまかわてるき鯖のWEBダッシュボード",
+        },
+        {
+          loc: `${SITE_URL}/ranking.webp`,
+          title: "やまかわてるき鯖ランキング",
+          caption: "やまかわてるき鯖のDiscord統計ランキング",
+        },
+      ],
+    },
     { url: "/terms", priority: 0.3, changefreq: "yearly" },
     { url: "/privacy", priority: 0.3, changefreq: "yearly" },
   ];
@@ -21,7 +37,8 @@ export const GET = async () => {
       loc: `${SITE_URL}${p.url}`,
       priority: p.priority,
       changefreq: p.changefreq,
-      lastmod: new Date().toISOString()
+      lastmod: new Date().toISOString(),
+      images: p.images || [],
     })),
     ...months.map(d => ({
       loc: `${SITE_URL}/month/${d.y}/${d.m}`,
@@ -38,13 +55,23 @@ export const GET = async () => {
   ];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+>
   ${urlEntries.map(entry => `
     <url>
       <loc>${escapeXml(entry.loc)}</loc>
       <lastmod>${escapeXml(entry.lastmod)}</lastmod>
       <changefreq>${entry.changefreq}</changefreq>
       <priority>${entry.priority}</priority>
+      ${(entry.images || []).map(image => `
+        <image:image>
+          <image:loc>${escapeXml(image.loc)}</image:loc>
+          <image:title>${escapeXml(image.title)}</image:title>
+          <image:caption>${escapeXml(image.caption)}</image:caption>
+        </image:image>
+      `).join('')}
     </url>
   `).join('')}
 </urlset>`;

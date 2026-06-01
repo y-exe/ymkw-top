@@ -28,6 +28,22 @@ const user = { id: userId, name: userName, avatar: userAvatar };
 
 const currentPath = Astro.url.pathname;
 const queryParams = Astro.url.search;
+const primarySearchTerm = "やまかわてるき";
+const siteName = "やまかわてるき鯖WEBダッシュボード";
+const siteAlternateNames = ["やまかわてるき鯖", "ymkw.top"];
+const seoKeywords = [
+  primarySearchTerm,
+  "やまかわてるき鯖",
+  "ymkw",
+  "ymkw.top",
+  "Discord統計",
+  "Discordランキング",
+  "やまかわてるき 統計",
+  "やまかわてるき ランキング",
+  "やまかわてるき Discord",
+];
+const seoSubject = `${primarySearchTerm}, やまかわてるき鯖, ymkw.top`;
+const seoAbstract = `${primarySearchTerm}、やまかわてるき鯖、Discord統計、ランキング、活動データを扱うymkw.topの公式ダッシュボード。`;
 
 const parts = currentPath.split("/").filter(Boolean);
 const isDashboard =
@@ -38,14 +54,35 @@ const canonicalURL = new URL(
   Astro.site || "https://ymkw.top",
 );
 const imageURL = new URL(image || "/ranking.webp", canonicalURL).href;
-const fullTitle = `${title} | やまかわてるき鯖WEBダッシュボード`;
+const fullTitle =
+  title === primarySearchTerm
+    ? `${primarySearchTerm} | ${siteName}`
+    : `${title} | ${primarySearchTerm} | ${siteName}`;
+const topicSchema = {
+  "@type": "Thing",
+  name: primarySearchTerm,
+  alternateName: "やまかわてるき鯖",
+  description: "やまかわてるきに関連するDiscord統計情報。",
+};
+const publisherSchema = {
+  "@type": "Organization",
+  name: siteName,
+  alternateName: siteAlternateNames,
+  url: "https://www.ymkw.top",
+  logo: new URL("/apple-touch-icon.png", canonicalURL).href,
+};
 
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "やまかわてるき鯖WEBダッシュボード",
+  name: siteName,
+  alternateName: siteAlternateNames,
   url: "https://www.ymkw.top",
   description: description,
+  inLanguage: "ja",
+  keywords: seoKeywords,
+  about: topicSchema,
+  publisher: publisherSchema,
 };
 
 const webPageSchema = {
@@ -55,11 +92,35 @@ const webPageSchema = {
   url: canonicalURL.href,
   description: description,
   inLanguage: "ja",
+  keywords: seoKeywords,
+  about: topicSchema,
+  mainEntity: topicSchema,
+  publisher: publisherSchema,
   isPartOf: {
     "@type": "WebSite",
-    name: "やまかわてるき鯖WEBダッシュボード",
+    name: siteName,
+    alternateName: siteAlternateNames,
     url: "https://www.ymkw.top",
   },
+};
+
+const datasetSchema = {
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  name: "やまかわてるき鯖 Discord統計データ",
+  alternateName: [
+    "やまかわてるき 統計",
+    "やまかわてるき ランキング",
+    "やまかわてるき Discord",
+  ],
+  description: seoAbstract,
+  url: canonicalURL.href,
+  keywords: seoKeywords,
+  inLanguage: "ja",
+  isAccessibleForFree: true,
+  creator: publisherSchema,
+  publisher: publisherSchema,
+  about: topicSchema,
 };
 
 let breadcrumbSchema = null;
@@ -93,22 +154,33 @@ const extraJsonLd = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
 
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <meta name="keywords" content={seoKeywords.join(", ")} />
+    <meta name="application-name" content={siteName} />
+    <meta name="author" content={siteName} />
+    <meta name="subject" content={seoSubject} />
+    <meta name="abstract" content={seoAbstract} />
+    <meta name="classification" content="やまかわてるき Discord統計 ダッシュボード" />
     <link rel="canonical" href={canonicalURL} />
+    <link rel="alternate" hreflang="ja" href={canonicalURL} />
     <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
-    <meta property="og:site_name" content="ymkw.top" />
+    <meta property="og:site_name" content={siteName} />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={imageURL} />
+    <meta property="og:image:alt" content={`${siteName} - ${primarySearchTerm}`} />
+    <meta property="article:tag" content={primarySearchTerm} />
+    <meta property="article:tag" content="やまかわてるき鯖" />
 
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
     <meta property="twitter:title" content={fullTitle} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={imageURL} />
+    <meta property="twitter:image:alt" content={`${siteName} - ${primarySearchTerm}`} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -128,6 +200,10 @@ const extraJsonLd = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
     <script
       type="application/ld+json"
       set:html={JSON.stringify(webPageSchema)}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(datasetSchema)}
     />
     {
       breadcrumbSchema && (
